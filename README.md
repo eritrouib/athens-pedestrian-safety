@@ -34,6 +34,7 @@ My MSc thesis in Geoinformatics (National Technical University of Athens, 2021),
 | 3 | `03_access.py` | Drive distance along the network from every street and collision to each hospital and to the nearest police and fire station; walking distance from points of interest to the nearest collision (the thesis's 100/250/500 m zones) |
 | 4 | `04_model.py` | Negative binomial regression on hexagons, with km of street as exposure; Moran's I on residuals; Geographically Weighted Poisson Regression (adaptive bisquare, AICc) |
 | 5 | `05_build_site.py` | Writes the data files and copies the dashboard and story into `docs/` |
+| 6 | `06_figures.py` | Optional: the paper figures, 300 dpi PNG, in `figures/` |
 
 ```
 python -m pip install -r requirements.txt

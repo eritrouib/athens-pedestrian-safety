@@ -544,8 +544,8 @@ select { background: var(--panel-2); border: 1px solid var(--line-2); border-rad
     if (rows.length) {
       var fh = F.filter(function (f) { return f.duty >= 0 && M.duty[f.duty].name === rows[0].name; })[0];
       if (fh) toHosp = L.layerGroup([
-        L.polyline([p, [fh.lat, fh.lon]], { color: "#0B1118", weight: 5, opacity: 0.8, interactive: false }),
-        L.polyline([p, [fh.lat, fh.lon]], { color: "#FFFFFF", weight: 2.2, dashArray: "6 6", interactive: false })]).addTo(map);
+        L.polyline([p, [fh.lat, fh.lon]], { color: "#0B1118", weight: 7, opacity: 0.85, interactive: false }),
+        L.polyline([p, [fh.lat, fh.lon]], { color: "#FFD27A", weight: 3, dashArray: "7 6", interactive: false })]).addTo(map);
     }
     if (window.innerWidth <= 860) box.scrollIntoView({ behavior: "smooth", block: "start" });
   }
