@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Athens Pedestrian Story</title>
+<meta name="description" content="Ten years of pedestrian collisions in Athens: where they happen, where they persist, what surrounds them and how far help is. A story by Eriola Trungu Impersimi.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Commissioner:wght@400;500;600;700&family=GFS+Didot&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script>window.ATH_MISSING=[];</script>
+<script src="data/meta.js" onerror="ATH_MISSING.push('meta')"></script>
+<script src="data/collisions.js" onerror="ATH_MISSING.push('collisions')"></script>
+<script src="data/kde.js" onerror="ATH_MISSING.push('kde')"></script>
+<script src="data/hexes.js" onerror="ATH_MISSING.push('hexes')"></script>
+<script src="data/cells.js" onerror="ATH_MISSING.push('cells')"></script>
+<script src="data/facilities.js" onerror="ATH_MISSING.push('facilities')"></script>
+<script src="data/context.js" onerror="ATH_MISSING.push('context')"></script>
+<script src="data/streets.js" onerror="ATH_MISSING.push('streets')"></script>
+<style>
+:root {
+  color-scheme: light;
+  --paper: #F4F1EA;
+  --card: #FFFDF8;
+  --ink: #1C2530;
+  --ink-2: #4A5562;
+  --ink-3: #6E7884;
+  --rule: #DCD5C8;
+  --aegean: #1F5F8B;
+  --sev-0: #E99A74; --sev-1: #D2532F; --sev-2: #9E1C2A;
+  --maxw: 700px;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.65 "Commissioner", system-ui, sans-serif; }
+a { color: var(--aegean); text-underline-offset: 3px; }
+h1, h2, .display { font-family: "GFS Didot", Georgia, serif; font-weight: 400; letter-spacing: -.01em; }
+.topbar { position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: rgba(244,241,234,.92); backdrop-filter: blur(6px); border-bottom: 1px solid var(--rule); font-size: 14px; }
+.topbar a { text-decoration: none; color: var(--ink); }
+.topbar .brand { font-weight: 700; border: 1px solid var(--ink); border-radius: 6px; padding: 1px 7px; font-size: 13px; }
+.topbar nav { display: flex; gap: 18px; align-items: center; }
+.topbar nav a:hover { color: var(--aegean); }
+/* cover */
+.cover { min-height: 88vh; display: grid; align-items: end; padding: 12vh 20px 8vh; background:
+  linear-gradient(180deg, rgba(244,241,234,0) 0%, rgba(244,241,234,.6) 55%, var(--paper) 100%),
+  repeating-linear-gradient(90deg, transparent 0 46px, rgba(28,37,48,.045) 46px 47px); }
+.cover-in { max-width: 980px; margin: 0 auto; width: 100%; }
+.kicker { font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--aegean); font-weight: 600; }
+.cover h1 { font-size: clamp(44px, 7.4vw, 96px); line-height: .98; margin: 12px 0 18px; }
+.cover .lede { font-size: clamp(18px, 2.1vw, 22px); color: var(--ink-2); max-width: 720px; margin: 0 0 30px; }
+.byline { font-size: 14px; color: var(--ink-3); }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--ink); margin-top: 36px; }
+.stats div { padding: 14px 16px 0 0; }
+.stats b { display: block; font-family: "GFS Didot", Georgia, serif; font-size: clamp(34px, 4.6vw, 56px); line-height: 1; font-weight: 400; font-variant-numeric: tabular-nums; }
+.stats span { font-size: 13.5px; color: var(--ink-2); }
+/* prose */
+.prose { max-width: var(--maxw); margin: 0 auto; padding: 0 20px; }
+.chapter { padding: 72px 0 24px; }
+.chapter .num { font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+.chapter h2 { font-size: clamp(34px, 4.4vw, 52px); line-height: 1.05; margin: 8px 0 18px; }
+p { margin: 0 0 1em; }
+.pull { font-family: "GFS Didot", Georgia, serif; font-size: 26px; line-height: 1.3; border-left: 3px solid var(--sev-2); padding-left: 18px; margin: 28px 0; }
+figure { margin: 28px 0; }
+figcaption { font-size: 13.5px; color: var(--ink-3); margin-top: 8px; }
+.card { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; padding: 18px 18px 14px; }
+.chart-title { font-weight: 600; font-size: 15px; margin: 0 0 2px; }
+.chart-sub { font-size: 13.5px; color: var(--ink-3); margin: 0 0 10px; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--ink-2); margin: 6px 0 4px; }
+.legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.legend i.ring { border-radius: 50%; }
+svg text { font-family: "Commissioner", system-ui, sans-serif; }
+.tip { position: fixed; pointer-events: none; z-index: 2000; background: var(--ink); color: #fff; font-size: 13px; padding: 7px 9px; border-radius: 7px; box-shadow: 0 6px 16px rgba(0,0,0,.2); opacity: 0; transition: opacity .1s; max-width: 260px; }
+table { width: 100%; border-collapse: collapse; font-size: 14.5px; font-variant-numeric: tabular-nums; }
+th, td { padding: 7px 8px; text-align: right; border-bottom: 1px solid var(--rule); }
+th:first-child, td:first-child { text-align: left; }
+th { font-weight: 600; color: var(--ink-2); font-size: 13px; }
+.tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.tile { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; padding: 14px; }
+.tile b { display: block; font-family: "GFS Didot", Georgia, serif; font-size: 40px; line-height: 1; font-weight: 400; }
+.tile span { font-size: 13.5px; color: var(--ink-2); }
+/* scrollytelling */
+.scrolly { position: relative; display: grid; grid-template-columns: minmax(320px, 440px) 1fr; gap: 0; margin: 20px 0; }
+.scrolly .map { position: sticky; top: 49px; height: calc(100vh - 49px); grid-column: 2; grid-row: 1; border-left: 1px solid var(--rule); }
+.scrolly .map > div { width: 100%; height: 100%; background: #E9E5DC; }
+.steps { grid-column: 1; grid-row: 1; padding: 30vh 24px 50vh; }
+.step { margin: 0 0 62vh; background: var(--card); border: 1px solid var(--rule); border-radius: 12px; padding: 18px 20px; box-shadow: 0 8px 24px rgba(28,37,48,.06); opacity: .45; transition: opacity .3s; }
+.step.on { opacity: 1; }
+.step:last-child { margin-bottom: 0; }
+.step h3 { margin: 0 0 6px; font-size: 18px; }
+.step p:last-child { margin-bottom: 0; }
+.step .legend { margin-top: 10px; }
+.numpin { width: 24px; height: 24px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; font-size: 12.5px; font-weight: 700; border: 2px solid #FFFDF8; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
+.maplabel { background: var(--card); border: 1px solid var(--ink); border-radius: 6px; padding: 2px 7px; font-size: 12.5px; font-weight: 600; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,.1); }
+.leaflet-tooltip.tt { background: var(--ink); color: #fff; border: 0; border-radius: 7px; font: 13px/1.4 "Commissioner", sans-serif; padding: 6px 8px; }
+.leaflet-tooltip.tt::before { display: none; }
+.leaflet-container { font: inherit; }
+.places { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.place { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
+.place b { font-size: 15.5px; line-height: 1.3; }
+.badge { font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; font-weight: 600; }
+.badge.p { color: var(--sev-2); }
+.badge.i { color: #A85A1A; }
+.place .n { font-size: 13.5px; color: var(--ink-2); }
+.place a { font-size: 14px; margin-top: auto; }
+.cta { display: flex; gap: 18px; align-items: center; background: var(--ink); color: #fff; border-radius: 14px; padding: 22px 24px; margin: 30px 0; }
+.cta p { margin: 0; flex: 1; }
+.cta a { background: #4CBFC4; color: #062126; text-decoration: none; font-weight: 700; padding: 10px 16px; border-radius: 9px; white-space: nowrap; }
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.compare div { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; padding: 14px 16px; font-size: 15px; }
+.compare h4 { margin: 0 0 6px; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
+.compare ul { margin: 0; padding-left: 18px; }
+footer { border-top: 1px solid var(--rule); margin-top: 60px; padding: 30px 20px 50px; font-size: 14px; color: var(--ink-3); }
+footer .prose { padding: 0; }
+.err { position: fixed; inset: 0; display: grid; place-items: center; background: var(--paper); z-index: 9999; padding: 24px; text-align: center; }
+@media (max-width: 900px) {
+  body { font-size: 16.5px; }
+  .scrolly { display: block; }
+  .scrolly .map { position: sticky; top: 45px; height: 52vh; border-left: 0; border-bottom: 1px solid var(--rule); z-index: 1; }
+  .steps { position: relative; z-index: 2; padding: 4vh 14px 30vh; margin-top: 0; }
+  .step { margin-bottom: 55vh; opacity: 1; background: rgba(255,253,248,.97); }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .tiles { grid-template-columns: 1fr; }
+  .places, .compare { grid-template-columns: 1fr; }
+  .cta { flex-direction: column; align-items: flex-start; }
+  .topbar nav .hide-sm { display: none; }
+  .leaflet-control-attribution { font-size: 9px; }
+  .steps { padding-top: 10vh; }
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a href="https://etymo.co.uk" class="brand" title="Made by Eriola Trungu Impersimi">@ET</a>
+  <nav><a class="hide-sm" href="#where">Where</a><a class="hide-sm" href="#time">Over time</a><a class="hide-sm" href="#around">What's around</a><a class="hide-sm" href="#help">Reaching help</a><a href="index.html"><b>Open the dashboard →</b></a></nav>
+</div>
+
+<header class="cover">
+  <div class="cover-in">
+    <div class="kicker">Athens · 2008–2017</div>
+    <h1>Ten years of pedestrian collisions in Athens</h1>
+    <p class="lede">Where pedestrians were hit, which streets kept coming back year after year, what surrounds those places, and how far help was along the streets.</p>
+    <div class="byline">By Eriola Trungu Impersimi · from my MSc thesis in Geoinformatics (NTUA, 2021), re-analysed in Python in 2026</div>
+    <div class="stats">
+      <div><b id="s-total">1,318</b><span>pedestrian collisions</span></div>
+      <div><b id="s-killed">30</b><span>pedestrians killed</span></div>
+      <div><b id="s-serious">80</b><span>seriously injured</span></div>
+      <div><b id="s-drop">55%</b><span>fewer in 2017 than in 2008</span></div>
+    </div>
+  </div>
+</header>
+
+<main>
+<section class="prose chapter" id="numbers">
+  <div class="num">1 · The numbers</div>
+  <h2>A decade that got safer, unevenly</h2>
+  <p>Between 2008 and 2017 the police recorded <b>1,318</b> collisions in the Municipality of Athens in which a pedestrian was hurt. Most were slight injuries: 1,208 of them. Eighty pedestrians were seriously injured and thirty were killed. In 68 collisions two people on foot were hurt, and in nine, three or four.</p>
+  <p>The yearly count held at around 180 until 2011, then fell sharply, to 98 in 2013 and 81 by 2017. The economic crisis took cars off the road: car numbers were reported to have fallen by more than 58% in 2011. At the same time, Greece invested in road safety, and in 2021 it received the European Transport Safety Council's award for halving road deaths between 2010 and 2020.</p>
+  <figure class="card">
+    <p class="chart-title">Pedestrian collisions per year, by severity</p>
+    <p class="chart-sub" id="trendnote"></p>
+    <div class="legend"><span><i style="background:var(--sev-2)"></i>Killed</span><span><i style="background:var(--sev-1)"></i>Seriously injured</span><span><i style="background:var(--sev-0)"></i>Slightly injured</span></div>
+    <svg id="yearsvg" width="100%" height="270" role="img" aria-label="Bar chart of collisions per year by severity"></svg>
+    <figcaption>Source: Hellenic Statistical Authority, from Hellenic Police records. Three collisions have no usable location and are left out of the maps that follow.</figcaption>
+  </figure>
+  <p>The more severe collisions fell faster still: 15 killed or seriously injured in 2008, two in 2017. With so few, though, single years jump around, so the maps below use all ten years together.</p>
+</section>
+
+<section id="where">
+  <div class="prose chapter" style="padding-bottom:0">
+    <div class="num">2 · Where</div>
+    <h2>The streets where it keeps happening</h2>
+    <p>A collision can only happen on a street, so its pattern should be measured along the streets. Each step below changes the map.</p>
+  </div>
+  <div class="scrolly" id="sc1">
+    <div class="map"><div id="map1"></div></div>
+    <div class="steps">
+      <div class="step" data-step="dots"><h3>Every collision</h3><p>Each dot is one collision, coloured by how badly the pedestrian was hurt. They follow the big avenues and the dense centre: Patision, Athinas, Peiraios, Alexandras and Syggrou.</p>
+        <div class="legend"><span><i class="ring" style="background:var(--sev-2)"></i>Killed</span><span><i class="ring" style="background:var(--sev-1)"></i>Serious</span><span><i class="ring" style="background:var(--sev-0)"></i>Slight</span></div></div>
+      <div class="step" data-step="kde"><h3>Density along the streets</h3><p>In the thesis I used kernel density, which spreads each collision in a circle across buildings and squares. Here the density runs <b>along the street network</b> instead: every street is cut into 50 m pieces, and each collision counts for the pieces within 250 m of walking distance. The brightest pieces see about seven collisions per kilometre of street per year.</p>
+        <div class="legend" id="kdelegend"></div></div>
+      <div class="step" data-step="centre"><h3>The centre around Omonia</h3><p>The densest street in Athens is <b>Patision near Omonia and Aiolou</b>: 25 collisions within 150 m in ten years. Athinas, Peiraios and the start of 28is Oktovriou follow close behind. These streets are busy at every hour, lined with shops, and people cross away from the crossings.</p></div>
+      <div class="step" data-step="ksi"><h3>Where people were killed or seriously injured</h3><p>The 109 most serious collisions follow a different map: wide, fast avenues. <b>Alexandras</b>, <b>Vasilissis Sofias</b> and <b>Galatsiou</b> lead, the same pattern the thesis found. Speed decides how badly someone is hurt.</p></div>
+      <div class="step" data-step="top"><h3>The ten busiest spots</h3><p>The ten densest stretches, at least 600 m apart, named after the streets of the collisions around them:</p><ol id="toplist" style="margin:0;padding-left:22px;font-size:15px"></ol></div>
+    </div>
+  </div>
+</section>
+
+<section id="time">
+  <div class="prose chapter" style="padding-bottom:0">
+    <div class="num">3 · Over time</div>
+    <h2>Persistent, new and fading hotspots</h2>
+    <p>A hotspot that appears every year needs a different response from one that showed up recently. The thesis used ArcGIS's space-time cube for this. I rebuilt the same logic in Python, on the same 200 m hexagons.</p>
+  </div>
+  <div class="scrolly" id="sc2">
+    <div class="map"><div id="map2"></div></div>
+    <div class="steps">
+      <div class="step" data-step="eh"><h3>Hotspots, year by year</h3><p>For each year, every hexagon is tested for being a statistically significant hotspot (Getis-Ord Gi*), and its trend across the decade is checked with a Mann-Kendall test. <b id="eh-persist">20</b> hexagons are <b>persistent</b> hotspots, hot in at least nine of ten years. Thirteen of them sit around <b>Omonia</b>, matching the thesis.</p>
+        <div class="legend"><span><i style="background:#A0202E"></i>Persistent</span><span><i style="background:#D8692A"></i>Consecutive</span><span><i style="background:#8A6A00"></i>New</span><span><i style="background:#C9B9A6"></i>Sporadic</span></div></div>
+      <div class="step" data-step="eh-north"><h3>The north is where it grew</h3><p>More than half of the <b>new</b> and <b>consecutive</b> hotspots, hot in the last years but not before, are in the northern districts: along Patision towards Galatsiou, and around Kypseli. The thesis flagged these areas as intensifying. They are the places where action now would do the most good.</p></div>
+      <div class="step" data-step="lisa"><h3>Clusters and outliers</h3><p>Local Moran's I asks whether a hexagon looks like its neighbours. <b id="lisa-hh">90</b> high-high cells form the core clusters: a lot of collisions surrounded by a lot of collisions. The few high-low cells are isolated problem spots in otherwise quiet streets.</p>
+        <div class="legend"><span><i style="background:#A0202E"></i>High-high</span><span><i style="background:#E7A0A8"></i>High-low</span><span><i style="background:#8FB3DA"></i>Low-high</span><span><i style="background:#2F6FB3"></i>Low-low</span></div></div>
+      <div class="step" data-step="centres"><h3>The centre of gravity barely moves</h3><p>The mean centre of each year's collisions stays within a few hundred metres, just north-east of Omonia towards Exarcheia, moving slightly north in the later years, as collisions fell faster in the centre than in the northern neighbourhoods.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="prose chapter" id="places">
+  <div class="num">4 · On the ground</div>
+  <h2>Ten places I looked at</h2>
+  <p>For the thesis I visited ten of the worst places on Street View: eight persistent and two intensifying hotspots. They have a lot in common: several lanes, traffic lights and crossings, shops, bus stops, and people crossing wherever they can. Each card links to the Street View image used in the thesis. The count is the number of collisions within 150 m in this re-analysis.</p>
+  <div class="places" id="placelist"></div>
+</section>
+
+<section id="around">
+  <div class="prose chapter">
+    <div class="num">5 · What's around</div>
+    <h2>Busy places, not bars</h2>
+    <p>The thesis looked at four kinds of places around the collisions: <b>alcohol venues</b> (bars, pubs, clubs), <b>education</b> (schools and colleges), <b>traffic points</b> (crossings, signals, stops) and <b>transport points</b> (bus, tram and metro stops, taxi ranks). The first test is simple: how many of each lie within 100, 250 and 500 m walking distance of a collision?</p>
+    <figure class="card">
+      <p class="chart-title">Points of interest by walking distance from the nearest collision</p>
+      <p class="chart-sub">Measured along the streets, inside the Municipality of Athens</p>
+      <div id="zonetable"></div>
+      <figcaption>The thesis found 48% within 100 m and 41% within 100–250 m, using ArcGIS service areas. Walking distances along the network give a similar picture. The 317 alcohol venues match the thesis exactly.</figcaption>
+    </figure>
+    <p>But closeness alone can mislead. The centre has many bars <i>and</i> many people, buses and crossings, so bars would sit near collisions even if they had nothing to do with them. A fairer test counts collisions in each 200 m hexagon, allows for how much street it has, and puts all four kinds of place into one model together. This is a negative binomial regression, the standard model for counts like these.</p>
+    <figure class="card">
+      <p class="chart-title">How much more likely collisions are, for each kind of place</p>
+      <p class="chart-sub">Rate ratio for one standard deviation more of each, with 95% confidence intervals. 1 means no difference.</p>
+      <div class="legend"><span><i class="ring" style="background:var(--ink)"></i>All four together</span><span><i class="ring" style="background:transparent;border:2px solid var(--ink-3)"></i>Each on its own</span></div>
+      <svg id="forest" width="100%" height="230" role="img" aria-label="Rate ratios with confidence intervals"></svg>
+      <figcaption id="forestcap"></figcaption>
+    </figure>
+    <p class="pull">Once busyness is accounted for, bars and schools no longer explain where collisions happen. Crossings, signals and bus stops do: they mark where people and traffic meet.</p>
+    <p>That doesn't make crossings dangerous: they are where people cross. It means the risk follows the volume of people meeting traffic, and the fix is in how those meeting points are designed. The thesis then used Geographically Weighted Regression to see where each relationship is strongest. The map below repeats that for traffic points.</p>
+  </div>
+  <div class="scrolly" id="sc3">
+    <div class="map"><div id="map3"></div></div>
+    <div class="steps">
+      <div class="step" data-step="gwr-traffic"><h3>Where traffic points matter most</h3><p>Geographically Weighted Regression gives each hexagon its own rate ratio. Darker hexagons are where a cell with more crossings and signals has many more collisions than its neighbours; hexagons that aren't significant are left blank.</p><div class="legend" id="gwrlegend"></div></div>
+      <div class="step" data-step="gwr-transport"><h3>And transport stops</h3><p>The same for bus, tram and metro stops. The link is significant across much of the city, and most often in the northern districts.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="help">
+  <div class="prose chapter">
+    <div class="num">6 · Reaching help</div>
+    <h2>How far help was</h2>
+    <p>The thesis ended with an emergency dashboard: collisions, hospitals, police and fire stations, and Esri's live traffic layer, so a control room could judge how long an ambulance would take. Here the street network does that work. For every collision I measured the drive along the streets to the nearest public general hospital, police station and fire station, at an average of <span class="speed">30</span> km/h and with no traffic.</p>
+    <div class="tiles" id="tiles"></div>
+    <p style="margin-top:18px">Athens has a particular complication: public hospitals take turns on emergency duty (εφημερίες), so the nearest hospital that will take a patient changes from day to day. The dashboard lets you tick which hospitals are on duty and recalculates every time on the map.</p>
+  </div>
+  <div class="scrolly" id="sc4">
+    <div class="map"><div id="map4"></div></div>
+    <div class="steps">
+      <div class="step" data-step="resp-h"><h3>Minutes to the nearest hospital</h3><p>Streets coloured by the drive to the nearest public general hospital, assuming all are open. The eastern districts, near Evangelismos, Ippokrateio, Laiko and Elpis, are within a few minutes. The far west, around Kolonos, Sepolia, Iera Odos and Athinon Avenue, is furthest away: a median of about 8 minutes, against under 1 minute in the east.</p><div class="legend" id="resplegend"></div></div>
+      <div class="step" data-step="resp-h-west"><h3>When only one hospital is on duty</h3><p>If Evangelismos were the only hospital on duty, collisions in the far west of the municipality would be <b id="evonly">over 10</b> minutes away even without traffic. That's why the rota matters, and why live traffic would make it worse.</p></div>
+      <div class="step" data-step="resp-f"><h3>Fire and rescue</h3><p>OpenStreetMap shows only two fire stations in or near the municipality, so these times are an upper limit. If the data is incomplete, the real times are shorter.</p></div>
+    </div>
+  </div>
+  <div class="prose">
+    <div class="cta"><p><b>Try it yourself.</b> Click anywhere in Athens to see the nearest on-duty hospitals, police and fire stations, and the collision history around that spot.</p><a href="index.html">Open the dashboard →</a></div>
+  </div>
+</section>
+
+<section class="prose chapter" id="next">
+  <div class="num">7 · What would help</div>
+  <h2>What the evidence points to</h2>
+  <p>The thesis closed with three observations that this re-analysis supports:</p>
+  <p><b>The meeting points need redesigning.</b> The persistent hotspots are wide streets with many lanes, where crossings sit far apart and people cross between them. Narrower crossings, refuge islands, longer green time for pedestrians and lower speeds on the avenues address where the risk actually is.</p>
+  <p><b>The north deserves attention now.</b> While the centre improved, new and consecutive hotspots appeared around Patision, Galatsiou and Kypseli.</p>
+  <p><b>Culture matters too.</b> Drivers often don't give way, and jaywalking is common. Education and enforcement work alongside design, not instead of it.</p>
+  <p>What the data can't say: it has only the year of each collision, not the day or hour, nor the age of the pedestrian or the type of vehicle. With those, the same methods could tell night-time collisions near bars from school-run collisions, as my <a href="https://etymo.co.uk/london-pedestrian-safety/">London project</a> does with British police data.</p>
+</section>
+
+<section class="prose chapter" id="method">
+  <div class="num">8 · Then and now</div>
+  <h2>From ArcGIS in 2021 to Python in 2026</h2>
+  <div class="compare">
+    <div><h4>Thesis, 2021</h4><ul><li>ArcGIS Pro and ArcMap (student licence)</li><li>Planar kernel density</li><li>Space-time cube (emerging hotspots)</li><li>Anselin Local Moran's I</li><li>Network Analyst walking service areas</li><li>Bivariate maps and GWR</li><li>ArcGIS Online dashboard with live traffic</li></ul></div>
+    <div><h4>This version, 2026</h4><ul><li>Python: GeoPandas, NetworkX, PySAL, statsmodels, mgwr</li><li>Network kernel density along the streets</li><li>Emerging hotspots rebuilt (Gi* per year + Mann-Kendall)</li><li>Local Moran's I, 999 permutations</li><li>Walking distances along the network</li><li>Negative binomial with street length as exposure, then GWR</li><li>Open dashboard with an on-duty hospital rota; live traffic optional</li></ul></div>
+  </div>
+  <p style="margin-top:20px">Everything is reproducible from the thesis data with five scripts, and the code is on <a href="https://github.com/eritrouib/athens-pedestrian-safety">GitHub</a>. Distances are best-case: the thesis street network has no one-way information, so routes may use streets in either direction. Hospitals, police and fire stations come from OpenStreetMap; public hospitals that OpenStreetMap stores only as building outlines are placed at the bus stop named after them, by their entrance.</p>
+</section>
+</main>
+
+<footer>
+  <div class="prose">
+    <p><b style="color:var(--ink)">Data</b>: pedestrian collisions 2008–2017, Hellenic Statistical Authority (ELSTAT), from Hellenic Police records. Streets, points of interest, hospitals, police and fire stations: © OpenStreetMap contributors. Basemap © Esri.</p>
+    <p>Made by Eriola Trungu Impersimi · <a href="https://etymo.co.uk">@ET</a> · <a href="index.html">Dashboard</a> · <a href="https://github.com/eritrouib/athens-pedestrian-safety">Code</a> · Built <span id="built"></span></p>
+  </div>
+</footer>
+<div class="tip" id="tip"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  if (window.ATH_MISSING.length || !window.ATH || !window.L) {
+    var d = document.createElement("div"); d.className = "err";
+    d.innerHTML = "<div><h1>Data not found</h1><p>Missing: " + (window.ATH_MISSING.join(", ") || "map library") + ". Run <code>python scripts/05_build_site.py</code>.</p></div>";
+    document.body.appendChild(d); return;
+  }
+  var M = ATH.meta, C = ATH.collisions, K = ATH.kde, H = ATH.hexes, CE = ATH.cells, F = ATH.facilities, X = ATH.context, S = ATH.streets;
+  var SEV = ["#E99A74", "#D2532F", "#9E1C2A"], SEVN = ["Slight", "Serious", "Killed"];
+  var DENS = ["#D99A72", "#CC774A", "#B55730", "#8F3D22", "#622513"];
+  var RESP = ["#72B5B9", "#4F9EA8", "#348496", "#27677E", "#1E4A62"];
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function fmt(n) { return n.toLocaleString("en-GB"); }
+  var tip = $("tip");
+  function showTip(e, html) { tip.innerHTML = html; tip.style.opacity = 1; tip.style.left = Math.min(e.clientX + 14, innerWidth - 270) + "px"; tip.style.top = (e.clientY + 14) + "px"; }
+  function hideTip() { tip.style.opacity = 0; }
+  $("built").textContent = M.built;
+  var drop = Math.round(100 * (1 - M.by_year[M.by_year.length - 1] / M.by_year[0]));
+  $("s-drop").textContent = drop + "%";
+  $("trendnote").textContent = "Mann-Kendall trend test: a steady decline (tau = " + M.trend_tau + ", p " + (M.trend_p < 0.001 ? "< 0.001" : "= " + M.trend_p.toFixed(3)) + ")";
+  $("eh-persist").textContent = M.emerging.Persistent || 0;
+  $("lisa-hh").textContent = M.lisa["High-High"] || 0;
+  document.querySelectorAll(".speed").forEach(function (s) { s.textContent = M.speed_kmh; });
+
+  // ------------------------------------------------------------------ year chart
+  function yearChart() {
+    var svg = $("yearsvg"), W = svg.clientWidth || 640, Hh = 270, p = { l: 34, r: 8, t: 14, b: 26 };
+    var top = 200, ih = Hh - p.t - p.b, bw = (W - p.l - p.r) / M.years.length, out = "";
+    [0, 50, 100, 150, 200].forEach(function (v) {
+      var y = p.t + ih - ih * v / top;
+      out += "<line x1='" + p.l + "' x2='" + (W - p.r) + "' y1='" + y + "' y2='" + y + "' stroke='#DCD5C8'/>" +
+        "<text x='" + (p.l - 6) + "' y='" + (y + 4) + "' text-anchor='end' font-size='12' fill='#6E7884'>" + v + "</text>";
+    });
+    M.years.forEach(function (yr, i) {
+      var x = p.l + i * bw + bw * 0.16, w = bw * 0.68, yb = p.t + ih, parts = M.by_year_sev[i];
+      var g = "<g class='yb' data-i='" + i + "'><rect x='" + (p.l + i * bw) + "' y='" + p.t + "' width='" + bw + "' height='" + ih + "' fill='transparent'/>";
+      [0, 1, 2].forEach(function (s) {
+        var v = parts[s]; if (!v) return;
+        var h = ih * v / top, gap = yb < p.t + ih ? 2 : 0;
+        var r = s === 2 || (s === 1 && !parts[2]) ? 3 : 0;
+        g += "<rect x='" + x + "' y='" + (yb - h + gap) + "' width='" + w + "' height='" + Math.max(h - gap, 1) + "' rx='" + r + "' fill='" + SEV[s] + "'/>";
+        yb -= h;
+      });
+      g += "<text x='" + (x + w / 2) + "' y='" + (Hh - 7) + "' text-anchor='middle' font-size='12' fill='#4A5562'>" + yr + "</text>";
+      if (i === 0 || i === M.years.length - 1) g += "<text x='" + (x + w / 2) + "' y='" + (yb - 6) + "' text-anchor='middle' font-size='12.5' font-weight='600' fill='#1C2530'>" + M.by_year[i] + "</text>";
+      out += g + "</g>";
+    });
+    svg.setAttribute("viewBox", "0 0 " + W + " " + Hh); svg.innerHTML = out;
+    svg.querySelectorAll(".yb").forEach(function (g) {
+      var i = +g.getAttribute("data-i"), pa = M.by_year_sev[i];
+      g.addEventListener("mousemove", function (e) { showTip(e, "<b>" + M.years[i] + "</b>: " + M.by_year[i] + " collisions<br>" + pa[2] + " killed · " + pa[1] + " serious · " + pa[0] + " slight"); });
+      g.addEventListener("mouseleave", hideTip);
+    });
+  }
+
+  // ------------------------------------------------------------------ zone table and forest plot
+  (function zoneTable() {
+    var Z = M.zones, cols = ["Alcohol", "Education", "Traffic", "Transport", "Sum", "%"];
+    var idx = cols.map(function (c) { return Z.cols.indexOf(c); });
+    var html = "<table><thead><tr><th>Walking distance</th><th>Alcohol</th><th>Education</th><th>Traffic</th><th>Transport</th><th>All</th><th>Share</th></tr></thead><tbody>";
+    Z.rows.forEach(function (r, i) {
+      html += "<tr><td>" + esc(r.replace("-", "–")) + "</td>" + idx.map(function (j, k) { var v = Z.values[i][j]; return "<td>" + (k === 5 ? v.toFixed(1) + "%" : fmt(v)) + "</td>"; }).join("") + "</tr>";
+    });
+    $("zonetable").innerHTML = html + "</tbody></table>";
+  })();
+  function forest() {
+    var svg = $("forest"), W = svg.clientWidth || 640, rows = M.model.nb, single = M.model.single, Hh = 230;
+    var p = { l: 110, r: 104, t: 12, b: 30 }, lo = 0.8, hi = 1.9;
+    var x = function (v) { return p.l + (Math.log(v) - Math.log(lo)) / (Math.log(hi) - Math.log(lo)) * (W - p.l - p.r); };
+    var rh = (Hh - p.t - p.b) / rows.length, out = "";
+    [0.8, 1, 1.25, 1.5, 1.75].forEach(function (v) {
+      out += "<line x1='" + x(v) + "' x2='" + x(v) + "' y1='" + p.t + "' y2='" + (Hh - p.b) + "' stroke='" + (v === 1 ? "#1C2530" : "#DCD5C8") + "' stroke-width='" + (v === 1 ? 1.5 : 1) + "'" + (v === 1 ? " stroke-dasharray='4 4'" : "") + "/>" +
+        "<text x='" + x(v) + "' y='" + (Hh - 10) + "' text-anchor='middle' font-size='12' fill='#6E7884'>" + v.toFixed(2).replace(/0$/, "") + "</text>";
+    });
+    var names = { Alcohol: "Alcohol venues", Education: "Education", Traffic: "Traffic points", Transport: "Transport stops" };
+    rows.forEach(function (r, i) {
+      var y = p.t + rh * i + rh / 2, s = single[i], sig = r.p < 0.05;
+      out += "<text x='" + (p.l - 12) + "' y='" + (y + 4) + "' text-anchor='end' font-size='13.5' fill='#1C2530'>" + names[r.variable] + "</text>";
+      out += "<line x1='" + x(s.lo) + "' x2='" + x(s.hi) + "' y1='" + (y + 9) + "' y2='" + (y + 9) + "' stroke='#9AA3AD' stroke-width='2'/>" +
+        "<circle cx='" + x(s.irr_per_sd) + "' cy='" + (y + 9) + "' r='5' fill='#FFFDF8' stroke='#6E7884' stroke-width='2'/>";
+      out += "<line x1='" + x(r.lo) + "' x2='" + x(r.hi) + "' y1='" + (y - 4) + "' y2='" + (y - 4) + "' stroke='#1C2530' stroke-width='2.2'/>" +
+        "<circle cx='" + x(r.irr_per_sd) + "' cy='" + (y - 4) + "' r='6' fill='" + (sig ? "#9E1C2A" : "#FFFDF8") + "' stroke='#1C2530' stroke-width='2'/>";
+      out += "<text x='" + (W - p.r + 8) + "' y='" + y + "' font-size='13' font-weight='600' fill='#1C2530'>×" + r.irr_per_sd.toFixed(2) + "</text>" +
+        "<text x='" + (W - p.r + 8) + "' y='" + (y + 15) + "' font-size='11.5' fill='#6E7884'>" + (sig ? "p < 0.001" : "not significant") + "</text>";
+      out += "<rect x='0' y='" + (y - rh / 2) + "' width='" + W + "' height='" + rh + "' fill='transparent' class='fr' data-i='" + i + "'/>";
+    });
+    svg.setAttribute("viewBox", "0 0 " + W + " " + Hh); svg.innerHTML = out;
+    svg.querySelectorAll(".fr").forEach(function (r) {
+      var i = +r.getAttribute("data-i"), a = rows[i], s = single[i];
+      r.addEventListener("mousemove", function (e) { showTip(e, "<b>" + names[a.variable] + "</b><br>Together: ×" + a.irr_per_sd.toFixed(2) + " (" + a.lo.toFixed(2) + "–" + a.hi.toFixed(2) + ")<br>On its own: ×" + s.irr_per_sd.toFixed(2) + "<br>1 SD = " + a.sd.toFixed(1) + " per hexagon"); });
+      r.addEventListener("mouseleave", hideTip);
+    });
+    var t = rows.filter(function (r) { return r.variable === "Traffic"; })[0];
+    $("forestcap").textContent = M.model.cells + " hexagons with at least 300 m of street; exposure = km of street. A filled red dot is significant at 5%. For example, a hexagon with " + t.sd.toFixed(1) +
+      " more crossings, signals or stops has " + Math.round(100 * (t.irr_per_sd - 1)) + "% more collisions, all else equal. Residual Moran's I = " + M.model.moran_resid.toFixed(2) + ", so some clustering is left unexplained.";
+  }
+
+  // ------------------------------------------------------------------ access tiles
+  $("tiles").innerHTML = [["hosp", "nearest public general hospital"], ["police", "nearest police station"], ["fire", "nearest fire station"]].map(function (t) {
+    var a = M.access[t[0]];
+    return "<div class='tile'><b>" + a.median + "<small style='font-size:18px'> min</small></b><span>median drive to the " + t[1] + "; 90% within " + a.p90 + " min</span></div>";
+  }).join("");
+
+  // ------------------------------------------------------------------ places
+  $("placelist").innerHTML = X.places.map(function (pl) {
+    return "<div class='place'><span class='badge " + (pl.type === "Persistent" ? "p" : "i") + "'>" + pl.type + " hotspot</span><b>" + esc(pl.name) + "</b><span class='n'>" +
+      pl.n + " collisions within 150 m · " + esc(pl.note) + "</span><a href='" + esc(pl.url) + "' target='_blank' rel='noopener'>Street View ↗</a></div>";
+  }).join("");
+
+  // ------------------------------------------------------------------ maps
+  var BOUNDS = L.latLngBounds(X.boundary);
+  function baseMap(id) {
+    var m = L.map(id, { zoomControl: false, scrollWheelZoom: false, preferCanvas: true, attributionControl: true }).fitBounds(BOUNDS, { padding: [10, 10] });
+    L.control.zoom({ position: "topright" }).addTo(m);
+    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", { maxZoom: 16, maxNativeZoom: 16, attribution: "Basemap &copy; Esri · &copy; OpenStreetMap contributors · ELSTAT" }).addTo(m);
+    m.createPane("lab"); m.getPane("lab").style.zIndex = 450; m.getPane("lab").style.pointerEvents = "none";
+    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}", { maxZoom: 18, maxNativeZoom: 16, pane: "lab" }).addTo(m);
+    L.polygon(X.boundary, { color: "#4A5562", weight: 1.2, dashArray: "4 4", fill: false, interactive: false }).addTo(m);
+    return m;
+  }
+  function cut(v, cuts) { var b = 0; while (b < cuts.length - 1 && v >= cuts[b + 1]) b++; return b; }
+  function legendRamp(el, colors, labels) {
+    $(el).innerHTML = colors.map(function (c, i) { return "<span><i style='background:" + c + "'></i>" + labels[i] + "</span>"; }).join("");
+  }
+
+  // map 1: where
+  var m1 = baseMap("map1"), cv1 = L.canvas({ padding: 0.3 });
+  function dots(filter) {
+    var g = L.layerGroup();
+    [0, 1, 2].forEach(function (s) {
+      for (var i = 0; i < C.lat.length; i++) if (C.sev[i] === s && (!filter || filter(i))) {
+        g.addLayer(L.circleMarker([C.lat[i], C.lon[i]], { renderer: cv1, radius: [2.6, 4.2, 5.6][s], color: "#FFFDF8", weight: 0.8, fillColor: SEV[s], fillOpacity: 0.95 })
+          .bindTooltip(SEVN[s] + " · " + C.year[i] + "<br>" + esc(C.street[i]), { className: "tt" }));
+      }
+    });
+    return g;
+  }
+  var allDots = dots(), ksiDots = dots(function (i) { return C.sev[i] > 0; });
+  function kdeLayer(vals, cuts) {
+    var g = L.layerGroup();
+    K.c.forEach(function (c, i) { var v = vals[i]; if (v < cuts[0]) return; var b = cut(v, cuts);
+      g.addLayer(L.polyline(c, { renderer: cv1, color: DENS[b], weight: 2 + b * 1.3, opacity: 0.95, lineCap: "round", interactive: false })); });
+    return g;
+  }
+  var kdeAll = kdeLayer(K.a, [0.3, 0.6, 1.0, 1.6, 2.6]), kdeKsi = kdeLayer(K.k, [0.06, 0.12, 0.2, 0.35, 0.6]);
+  legendRamp("kdelegend", DENS, ["0.3", "0.6", "1", "1.6", "2.6+"]);
+  $("kdelegend").insertAdjacentHTML("beforeend", "<span style='width:100%'>collisions per km of street per year</span>");
+  var topLayer = L.layerGroup();
+  X.top_all.forEach(function (t, i) {
+    topLayer.addLayer(L.marker([t.lat, t.lon], { icon: L.divIcon({ className: "", html: "<div class='numpin'>" + (i + 1) + "</div>", iconSize: [24, 24], iconAnchor: [12, 12] }) })
+      .bindTooltip("<b>" + esc(t.label) + "</b><br>" + t.n + " collisions within 150 m, 2008–2017", { className: "tt" }));
+  });
+  $("toplist").innerHTML = X.top_all.map(function (t) { return "<li>" + esc(t.label) + " <span style='color:var(--ink-3)'>· " + t.n + "</span></li>"; }).join("");
+  var omonia = L.latLngBounds([[37.9745, 23.7175], [37.9925, 23.7385]]);
+  var steps1 = {
+    "dots": { layers: [allDots], view: BOUNDS },
+    "kde": { layers: [kdeAll], view: BOUNDS },
+    "centre": { layers: [kdeAll, allDots], view: omonia },
+    "ksi": { layers: [kdeKsi, ksiDots], view: BOUNDS },
+    "top": { layers: [kdeAll, topLayer], view: BOUNDS }
+  };
+
+  // map 2: over time
+  var m2 = baseMap("map2"), cv2 = L.canvas({ padding: 0.3 });
+  var EHC = { "Persistent": "#A0202E", "Intensifying": "#A0202E", "Consecutive": "#D8692A", "New": "#8A6A00", "Sporadic": "#C9B9A6", "Diminishing": "#8FB3DA", "Historical": "#8FB3DA" };
+  var LIC = { "High-High": "#A0202E", "High-Low": "#E7A0A8", "Low-High": "#8FB3DA", "Low-Low": "#2F6FB3" };
+  function hexLayer(colorOf, tipOf, only) {
+    var g = L.layerGroup();
+    H.c.forEach(function (c, i) { var col = colorOf(i); if (!col || (only && !only(i))) return;
+      g.addLayer(L.polygon(c, { renderer: cv2, color: "#FFFDF8", weight: 0.8, fillColor: col, fillOpacity: 0.82 }).bindTooltip(tipOf(i), { className: "tt", sticky: true })); });
+    return g;
+  }
+  var ehTip = function (i) { return "<b>" + esc(H.eh[i]) + "</b><br>" + H.n[i] + " collisions 2008–2017<br>by year: " + H.years[i].join(" "); };
+  var ehAll = hexLayer(function (i) { return EHC[H.eh[i]]; }, ehTip);
+  var ehNorth = hexLayer(function (i) { return EHC[H.eh[i]]; }, ehTip, function (i) { return H.eh[i] === "New" || H.eh[i] === "Consecutive"; });
+  var lisa = hexLayer(function (i) { return LIC[H.lisa[i]]; }, function (i) { return "<b>" + esc(H.lisa[i]) + "</b><br>" + H.n[i] + " collisions"; });
+  var centres = L.layerGroup(), cpts = X.centres.map(function (c) { return [c.lat, c.lon]; });
+  centres.addLayer(L.polyline(cpts, { color: "#1C2530", weight: 1.5, dashArray: "3 4" }));
+  X.centres.forEach(function (c, i) {
+    centres.addLayer(L.circleMarker([c.lat, c.lon], { radius: 6, color: "#FFFDF8", weight: 2, fillColor: i < 5 ? "#9E1C2A" : "#1F5F8B", fillOpacity: 1 })
+      .bindTooltip(String(c.year), { permanent: i === 0 || i === X.centres.length - 1, direction: i === 0 ? "left" : "right", className: "tt" }));
+  });
+  centres.addLayer(L.marker([37.9842, 23.7281], { icon: L.divIcon({ className: "", html: "<div class='maplabel'>Omonia</div>", iconSize: null, iconAnchor: [-6, 10] }), interactive: false }));
+  centres.addLayer(L.circleMarker([37.9842, 23.7281], { radius: 4, color: "#1C2530", weight: 2, fillColor: "#FFFDF8", fillOpacity: 1, interactive: false }));
+  var steps2 = {
+    "eh": { layers: [ehAll], view: BOUNDS },
+    "eh-north": { layers: [ehNorth], view: L.latLngBounds([[37.99, 23.715], [38.03, 23.765]]) },
+    "lisa": { layers: [lisa], view: BOUNDS },
+    "centres": { layers: [allDots2(), centres], view: L.latLngBounds([[37.978, 23.718], [37.995, 23.742]]) }
+  };
+  function allDots2() { var g = L.layerGroup(); for (var i = 0; i < C.lat.length; i++) g.addLayer(L.circleMarker([C.lat[i], C.lon[i]], { renderer: cv2, radius: 2, stroke: false, fillColor: "#9AA3AD", fillOpacity: 0.6, interactive: false })); return g; }
+
+  // map 3: GWR
+  var m3 = baseMap("map3"), cv3 = L.canvas({ padding: 0.3 });
+  var GW = [1.0, 1.2, 1.4, 1.6, 1.8];
+  function gwrLayer(name) {
+    var g = L.layerGroup(), v = CE.gwr[name], sig = CE.sig[name];
+    if (!v) return g;
+    CE.c.forEach(function (c, i) {
+      var on = sig[i] && v[i] > 1;
+      g.addLayer(L.polygon(c, { renderer: cv3, color: on ? "#FFFDF8" : "#CFC8BB", weight: on ? 0.8 : 0.5, fillColor: on ? DENS[cut(v[i], GW)] : "#F4F1EA", fillOpacity: on ? 0.85 : 0.3 })
+        .bindTooltip("Local rate ratio ×" + v[i].toFixed(2) + (sig[i] ? "" : " (not significant)") + "<br>" + CE.n[i] + " collisions", { className: "tt", sticky: true }));
+    });
+    return g;
+  }
+  legendRamp("gwrlegend", DENS, ["×1.0", "×1.2", "×1.4", "×1.6", "×1.8+"]);
+  var steps3 = { "gwr-traffic": { layers: [gwrLayer("Traffic")], view: BOUNDS }, "gwr-transport": { layers: [gwrLayer("Transport")], view: BOUNDS } };
+
+  // map 4: reaching help
+  var m4 = baseMap("map4"), cv4 = L.canvas({ padding: 0.3 }), BANDS = [2, 4, 6, 8];
+  var mpm = M.speed_kmh * 1000 / 60;
+  function respLayer(dist) {
+    var g = L.layerGroup();
+    S.c.forEach(function (c, i) { var m = dist(i) * 10 / mpm; var b = 0; while (b < BANDS.length && m > BANDS[b]) b++;
+      g.addLayer(L.polyline(c, { renderer: cv4, color: RESP[b], weight: 1.7, opacity: 0.95, interactive: false })); });
+    return g;
+  }
+  var generals = M.duty.map(function (d, i) { return d.kind === "general" ? i : -1; }).filter(function (i) { return i >= 0; });
+  var evI = M.duty.map(function (d) { return d.name; }).indexOf("Evangelismos General Hospital");
+  var respAll = respLayer(function (i) { var b = Infinity; generals.forEach(function (h) { if (S.h[h][i] < b) b = S.h[h][i]; }); return b; });
+  var respEv = respLayer(function (i) { return S.h[evI][i]; });
+  var respFire = respLayer(function (i) { return S.f[i]; });
+  (function () { var mx = 0; for (var i = 0; i < C.lat.length; i++) mx = Math.max(mx, C.h[evI][i] * 10 / mpm); $("evonly").textContent = "up to " + Math.round(mx) ; })();
+  legendRamp("resplegend", RESP, ["≤ 2 min", "2–4", "4–6", "6–8", "> 8"]);
+  function facLayer(types, onlyEv) {
+    var g = L.layerGroup();
+    F.forEach(function (f) {
+      if (types.indexOf(f.type) < 0) return;
+      if (f.type === "hospital" && f.kind !== "general") return;
+      if (onlyEv && f.name !== "Evangelismos General Hospital") return;
+      var t = f.type === "hospital" ? "H" : "F";
+      g.addLayer(L.marker([f.lat, f.lon], { icon: L.divIcon({ className: "", html: "<div class='maplabel' style='padding:1px 5px'>" + t + "</div>", iconSize: null, iconAnchor: [9, 10] }) })
+        .bindTooltip(esc(f.name), { className: "tt" }));
+    });
+    return g;
+  }
+  var steps4 = {
+    "resp-h": { layers: [respAll, facLayer(["hospital"])], view: BOUNDS },
+    "resp-h-west": { layers: [respEv, facLayer(["hospital"], true)], view: BOUNDS },
+    "resp-f": { layers: [respFire, facLayer(["fire"])], view: BOUNDS }
+  };
+
+  // ------------------------------------------------------------------ scrollytelling
+  function scrolly(rootId, map, steps) {
+    var current = null;
+    function go(key) {
+      if (key === current) return;
+      if (current) steps[current].layers.forEach(function (l) { map.removeLayer(l); });
+      steps[key].layers.forEach(function (l) { l.addTo(map); });
+      map.flyToBounds(steps[key].view, { padding: [16, 16], duration: 0.9 });
+      current = key;
+    }
+    var els = document.querySelectorAll("#" + rootId + " .step");
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          els.forEach(function (s) { s.classList.toggle("on", s === e.target); });
+          go(e.target.getAttribute("data-step"));
+        }
+      });
+    }, { rootMargin: innerWidth <= 900 ? "-68% 0px -22% 0px" : "-45% 0px -45% 0px" });
+    els.forEach(function (s) { io.observe(s); });
+    go(els[0].getAttribute("data-step"));
+    els[0].classList.add("on");
+  }
+  scrolly("sc1", m1, steps1); scrolly("sc2", m2, steps2); scrolly("sc3", m3, steps3); scrolly("sc4", m4, steps4);
+  [m1, m2, m3, m4].forEach(function (m) { setTimeout(function () { m.invalidateSize(); }, 300); });
+
+  yearChart(); forest();
+  var rt; window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(function () { yearChart(); forest(); }, 150); });
+})();
+</script>
+</body>
+</html>

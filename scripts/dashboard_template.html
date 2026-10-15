@@ -1,0 +1,569 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Athens Emergency View</title>
+<meta name="description" content="Pedestrian collisions in Athens 2008-2017, with hotspots, emergency service locations and response distances along the street network.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Commissioner:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script>window.ATH_MISSING=[];</script>
+<script src="data/meta.js" onerror="ATH_MISSING.push('meta')"></script>
+<script src="data/collisions.js" onerror="ATH_MISSING.push('collisions')"></script>
+<script src="data/streets.js" onerror="ATH_MISSING.push('streets')"></script>
+<script src="data/kde.js" onerror="ATH_MISSING.push('kde')"></script>
+<script src="data/facilities.js" onerror="ATH_MISSING.push('facilities')"></script>
+<script src="data/hexes.js" onerror="ATH_MISSING.push('hexes')"></script>
+<script src="data/context.js" onerror="ATH_MISSING.push('context')"></script>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #0B1118;
+  --panel: #111820;
+  --panel-2: #172029;
+  --line: #24303C;
+  --line-2: #33414F;
+  --ink: #EEF2F5;
+  --ink-2: #B7C2CC;
+  --ink-3: #8593A1;
+  --accent: #4CBFC4;
+  --sev-0: #F9C8A8;  /* slight */
+  --sev-1: #F2804F;  /* serious */
+  --sev-2: #E23A3A;  /* fatal */
+  --hosp: #F2F5F8;
+  --police: #6AA7F0;
+  --fire: #F2804F;
+  --r: 10px;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 14px/1.45 "Commissioner", system-ui, sans-serif; }
+a { color: var(--accent); }
+button, select, input { font: inherit; color: inherit; }
+.app { display: grid; grid-template-columns: 380px 1fr; height: 100vh; }
+aside { background: var(--panel); border-right: 1px solid var(--line); overflow-y: auto; display: flex; flex-direction: column; }
+#map { height: 100%; background: #0E141B; }
+header.top { padding: 16px 18px 12px; border-bottom: 1px solid var(--line); }
+.brandrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.kicker { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+h1 { font-size: 19px; line-height: 1.25; margin: 4px 0 2px; font-weight: 700; }
+.sub { color: var(--ink-3); font-size: 12.5px; margin: 0; }
+.brand { font-weight: 700; color: var(--ink); text-decoration: none; border: 1px solid var(--line-2); border-radius: 6px; padding: 2px 7px; font-size: 12px; }
+.brand:hover { border-color: var(--accent); }
+section.blk { padding: 14px 18px; border-bottom: 1px solid var(--line); }
+h2 { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); margin: 0 0 10px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+h2 .note { text-transform: none; letter-spacing: 0; color: var(--ink-3); font-weight: 400; font-size: 12px; }
+.kpis { display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 8px; }
+.kpi { background: var(--panel-2); border-radius: 8px; padding: 9px 10px; }
+.kpi b { display: block; font-size: 21px; line-height: 1.1; font-weight: 700; font-variant-numeric: tabular-nums; }
+.kpi span { font-size: 11.5px; color: var(--ink-3); display: flex; align-items: center; gap: 5px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line-2); background: transparent; border-radius: 999px; padding: 4px 10px 4px 8px; display: inline-flex; gap: 6px; align-items: center; cursor: pointer; font-size: 12.5px; }
+.chip[aria-pressed="false"] { opacity: .45; }
+.chip:hover { border-color: var(--ink-3); }
+#yearchart { width: 100%; height: 132px; display: block; }
+#yearchart .bar { cursor: pointer; }
+#yearchart text { fill: var(--ink-3); font-size: 10.5px; }
+.rowbtns { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+.btn { border: 1px solid var(--line-2); background: var(--panel-2); border-radius: 7px; padding: 5px 11px; cursor: pointer; font-size: 12.5px; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: #062126; border-color: var(--accent); font-weight: 600; }
+.yearlabel { color: var(--ink-2); font-size: 12.5px; margin-left: auto; font-variant-numeric: tabular-nums; }
+.split { display: flex; height: 14px; border-radius: 4px; overflow: hidden; gap: 2px; background: var(--panel); }
+.split div { height: 100%; }
+.splitlab { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-2); margin-top: 6px; gap: 6px; }
+.hosplist { display: grid; gap: 4px; }
+.hosplist label { display: flex; gap: 8px; align-items: center; font-size: 13px; cursor: pointer; padding: 3px 4px; border-radius: 6px; }
+.hosplist label:hover { background: var(--panel-2); }
+.hosplist input { accent-color: var(--accent); }
+.tag { font-size: 10.5px; color: var(--ink-3); border: 1px solid var(--line-2); border-radius: 4px; padding: 0 4px; margin-left: auto; }
+.seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: transparent; padding: 5px 10px; cursor: pointer; font-size: 12.5px; border-right: 1px solid var(--line-2); }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: #062126; font-weight: 600; }
+.ctl { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.ctl label { font-size: 12.5px; color: var(--ink-2); }
+select { background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 7px; padding: 4px 6px; }
+.legend { display: flex; gap: 0; margin-top: 8px; }
+.legend div { flex: 1; text-align: center; font-size: 11px; color: var(--ink-3); }
+.legend i { display: block; height: 6px; border-radius: 2px; margin: 0 1px 3px; }
+.layers { display: grid; gap: 4px; }
+.layers label { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
+.layers input { accent-color: var(--accent); }
+.layers small { color: var(--ink-3); margin-left: auto; font-size: 11.5px; }
+#incident { display: none; }
+#incident.on { display: block; background: #0F2228; }
+.inc-h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.inc-h b { font-size: 15px; }
+.rank { display: grid; gap: 6px; margin: 8px 0; }
+.rank div { display: grid; grid-template-columns: 18px 1fr auto; gap: 8px; align-items: baseline; font-size: 13px; }
+.rank .t { font-variant-numeric: tabular-nums; font-weight: 600; }
+.rank .k { color: var(--ink-3); font-size: 12px; font-weight: 400; }
+.muted { color: var(--ink-3); font-size: 12px; }
+.hint { color: var(--ink-3); font-size: 12.5px; margin: 0; }
+.foot { padding: 14px 18px 22px; color: var(--ink-3); font-size: 12px; margin-top: auto; }
+.foot a { color: var(--ink-2); }
+.err { position: fixed; inset: 0; display: grid; place-items: center; background: var(--bg); z-index: 9999; padding: 24px; text-align: center; }
+/* map pieces */
+.leaflet-container { font: inherit; }
+.leaflet-tooltip.tt { background: #0B1118; color: var(--ink); border: 1px solid var(--line-2); border-radius: 8px; box-shadow: 0 6px 18px rgba(0,0,0,.4); padding: 7px 9px; font-size: 12.5px; }
+.leaflet-tooltip.tt::before { display: none; }
+.leaflet-popup-content-wrapper, .leaflet-popup-tip { background: #0B1118; color: var(--ink); }
+.fac { display: grid; place-items: center; font: 700 11px/1 "Commissioner", sans-serif; border-radius: 5px; border: 2px solid #0B1118; box-shadow: 0 0 0 1px rgba(255,255,255,.25); }
+.fac.h { background: var(--hosp); color: #B4232F; }
+.fac.h.off { background: #5B6670; color: #0B1118; }
+.fac.h.o { background: #9AA6B1; color: #0B1118; }
+.fac.p { background: var(--police); color: #0B1118; border-radius: 50%; }
+.fac.f { background: var(--fire); color: #0B1118; transform: rotate(45deg); border-radius: 3px; }
+.fac.f span { transform: rotate(-45deg); }
+.pin { width: 18px; height: 18px; border-radius: 50%; background: var(--accent); border: 3px solid #fff; box-shadow: 0 0 0 6px rgba(76,191,196,.35); }
+.leaflet-control-attribution { background: rgba(11,17,24,.75) !important; color: var(--ink-3) !important; }
+.leaflet-control-attribution a { color: var(--ink-2) !important; }
+.maphint { background: rgba(11,17,24,.88); border: 1px solid var(--line-2); border-radius: 8px; padding: 6px 10px; color: var(--ink-2); font-size: 12.5px; }
+@media (max-width: 860px) {
+  .app { grid-template-columns: 1fr; grid-template-rows: 58vh auto; height: auto; }
+  #map { height: 58vh; grid-row: 1; }
+  aside { grid-row: 2; border-right: 0; overflow: visible; }
+  .kpis { grid-template-columns: 1fr 1fr; }
+  .leaflet-control-attribution { font-size: 9.5px; max-width: 70vw; }
+  .maphint { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <header class="top">
+      <div class="brandrow">
+        <span class="kicker">Emergency services view</span>
+        <a class="brand" href="https://etymo.co.uk" title="Made by Eriola Trungu Impersimi">@ET</a>
+      </div>
+      <h1>Pedestrian collisions in Athens, 2008–2017</h1>
+      <p class="sub">Where pedestrians were hit, where it keeps happening, and how far help is along the streets. <a href="story.html">Read the story →</a></p>
+    </header>
+
+    <section class="blk" id="incident" aria-live="polite"></section>
+
+    <section class="blk">
+      <h2>Selection <span class="note" id="selnote"></span></h2>
+      <div class="kpis">
+        <div class="kpi"><b id="k-all">–</b><span>Collisions</span></div>
+        <div class="kpi"><b id="k-2">–</b><span><i class="dot" style="background:var(--sev-2)"></i>Killed</span></div>
+        <div class="kpi"><b id="k-1">–</b><span><i class="dot" style="background:var(--sev-1)"></i>Serious</span></div>
+        <div class="kpi"><b id="k-0">–</b><span><i class="dot" style="background:var(--sev-0)"></i>Slight</span></div>
+      </div>
+    </section>
+
+    <section class="blk">
+      <h2>By year <span class="note">click a year to filter</span></h2>
+      <svg id="yearchart" role="img" aria-label="Collisions per year by severity"></svg>
+      <div class="rowbtns">
+        <button class="btn" id="play" type="button">▶ Play years</button>
+        <button class="btn" id="allyears" type="button">All years</button>
+        <span class="yearlabel" id="yearlabel">2008–2017</span>
+      </div>
+    </section>
+
+    <section class="blk">
+      <h2>Severity</h2>
+      <div class="chips" id="sevchips"></div>
+      <div style="margin-top:10px"><div class="split" id="split"></div><div class="splitlab" id="splitlab"></div></div>
+    </section>
+
+    <section class="blk">
+      <h2>Response along the streets</h2>
+      <div class="ctl">
+        <div class="seg" id="respseg" role="group" aria-label="Colour the streets by time to">
+          <button type="button" data-v="hosp" aria-pressed="true">Hospital</button>
+          <button type="button" data-v="police" aria-pressed="false">Police</button>
+          <button type="button" data-v="fire" aria-pressed="false">Fire</button>
+          <button type="button" data-v="off" aria-pressed="false">Off</button>
+        </div>
+        <label>at <select id="speed" aria-label="Average driving speed"><option value="20">20</option><option value="30" selected>30</option><option value="40">40</option></select> km/h</label>
+      </div>
+      <div class="legend" id="resplegend"></div>
+      <p class="hint" style="margin-top:8px">Minutes along the street network at an average speed, with no traffic. <span id="trafficnote"></span></p>
+    </section>
+
+    <section class="blk">
+      <h2>On duty today <span class="note"><a href="#" id="hall">all</a> · <a href="#" id="hnone">none</a></span></h2>
+      <p class="hint" style="margin-bottom:8px">Athens hospitals take turns on emergency duty (εφημερίες). Tick the ones on duty and every time on the map updates.</p>
+      <div class="hosplist" id="hosplist"></div>
+    </section>
+
+    <section class="blk">
+      <h2>Layers</h2>
+      <div class="layers">
+        <label><input type="checkbox" id="L-col" checked> Collisions <small id="ncol"></small></label>
+        <label><input type="checkbox" id="L-kde"> Street hotspots <small>all collisions</small></label>
+        <label><input type="checkbox" id="L-ksi"> Street hotspots <small>killed or seriously injured</small></label>
+        <label><input type="checkbox" id="L-eh"> Persistent and new hotspot areas <small>space-time</small></label>
+        <label><input type="checkbox" id="L-fac" checked> Hospitals, police, fire</label>
+        <label><input type="checkbox" id="L-traffic"> Live traffic <small id="trafficsmall">TomTom</small></label>
+      </div>
+    </section>
+
+    <div class="foot">
+      <p style="margin:0 0 6px"><b style="color:var(--ink-2)">Click anywhere on the map</b> to see the nearest on-duty hospitals, police and fire stations, and the collision history around that spot.</p>
+      <p style="margin:0 0 6px">Data: Hellenic Statistical Authority (from the Hellenic Police), 1,318 pedestrian collisions, of which <span id="located"></span> have a location. Streets, hospitals, police and fire stations: OpenStreetMap contributors. Network analysis in Python. Distances are best-case, without traffic.</p>
+      <p style="margin:0">Built <span id="built"></span> · Made by Eriola Trungu Impersimi · <a href="https://etymo.co.uk">@ET</a> · <a href="story.html">Methods and story</a></p>
+    </div>
+  </aside>
+  <div id="map" role="application" aria-label="Map of pedestrian collisions in Athens"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  if (window.ATH_MISSING.length || !window.ATH || !window.L) {
+    var d = document.createElement("div");
+    d.className = "err";
+    d.innerHTML = "<div><h1>Data not found</h1><p class='sub'>Missing: " + (window.ATH_MISSING.join(", ") || "map library") +
+      ". Run <code>python scripts/05_build_site.py</code>, then open this page from the <code>docs</code> folder.</p></div>";
+    document.body.appendChild(d);
+    return;
+  }
+  var M = ATH.meta, C = ATH.collisions, S = ATH.streets, K = ATH.kde, F = ATH.facilities, H = ATH.hexes, X = ATH.context;
+  var SEVN = ["Slight", "Serious", "Fatal"], SEVC = ["var(--sev-0)", "var(--sev-1)", "var(--sev-2)"];
+  var SEVHEX = ["#F9C8A8", "#F2804F", "#E23A3A"];
+  var RAMP = ["#D9F5F4", "#93DDDD", "#4CBFC4", "#2C98A8", "#25718A"];   // response time: near -> far
+  var BANDS = [2, 4, 6, 8];                                              // minute breaks
+  var DENS = ["#83521A", "#B7741C", "#E39A2E", "#F7C060", "#FFE3A3"];    // density: low -> high
+  var YEARS = M.years, NC = C.year.length;
+  var state = { y0: YEARS[0], y1: YEARS[YEARS.length - 1], sev: [true, true, true], resp: "hosp", speed: 30,
+                duty: M.duty.map(function (h) { return h.kind === "general"; }), playing: null, incident: null };
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function fmt(n) { return n.toLocaleString("en-GB"); }
+  function mins(d10) { return d10 * 10 / (state.speed * 1000 / 60); }
+  function fmtMin(m) { return m < 10 ? m.toFixed(1) : Math.round(m).toString(); }
+  $("built").textContent = M.built;
+  $("located").textContent = fmt(M.located);
+
+  // ---------------- map ----------------
+  var map = L.map("map", { zoomControl: true, preferCanvas: true, minZoom: 12, maxZoom: 18 }).setView([37.985, 23.735], 14);
+  var canvas = L.canvas({ padding: 0.3, tolerance: 4 });
+  L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
+    maxZoom: 16, maxNativeZoom: 16, attribution: "Basemap &copy; Esri"
+  }).addTo(map);
+  map.createPane("labels"); map.getPane("labels").style.zIndex = 450; map.getPane("labels").style.pointerEvents = "none";
+  L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}", {
+    maxZoom: 18, maxNativeZoom: 16, pane: "labels"
+  }).addTo(map);
+  map.attributionControl.addAttribution("Collisions: ELSTAT / Hellenic Police · Streets & services: &copy; OpenStreetMap contributors");
+  L.polygon(X.boundary, { color: "#8593A1", weight: 1.2, dashArray: "4 4", fill: false, interactive: false }).addTo(map);
+
+  // response layer (streets coloured by minutes)
+  var respLayer = L.layerGroup().addTo(map);
+  var streetLines = S.c.map(function (c) {
+    return L.polyline(c, { renderer: canvas, weight: 2, opacity: 0.9, interactive: false });
+  });
+  streetLines.forEach(function (l) { respLayer.addLayer(l); });
+  function streetDist(i) {
+    if (state.resp === "police") return S.p[i];
+    if (state.resp === "fire") return S.f[i];
+    var best = Infinity;
+    for (var h = 0; h < S.h.length; h++) if (state.duty[h] && S.h[h][i] < best) best = S.h[h][i];
+    return best;
+  }
+  function band(m) { for (var b = 0; b < BANDS.length; b++) if (m <= BANDS[b]) return b; return BANDS.length; }
+  function drawResponse() {
+    if (state.resp === "off") { map.removeLayer(respLayer); return; }
+    if (!map.hasLayer(respLayer)) respLayer.addTo(map);
+    var anyDuty = state.duty.some(Boolean);
+    for (var i = 0; i < streetLines.length; i++) {
+      var d = streetDist(i);
+      var col = (!isFinite(d) || (state.resp === "hosp" && !anyDuty)) ? "#3A4652" : RAMP[band(mins(d))];
+      streetLines[i].setStyle({ color: col, weight: 1.6 });
+    }
+  }
+  function drawLegend() {
+    var labs = ["≤ 2", "2–4", "4–6", "6–8", "> 8"];
+    $("resplegend").innerHTML = state.resp === "off" ? "" : RAMP.map(function (c, i) {
+      return "<div><i style='background:" + c + "'></i>" + labs[i] + " min</div>"; }).join("");
+  }
+
+  // street hotspots (network kernel density)
+  function densLayer(values, cuts) {
+    var g = L.layerGroup();
+    K.c.forEach(function (c, i) {
+      var v = values[i]; if (v < cuts[0]) return;
+      var b = 0; while (b < cuts.length - 1 && v >= cuts[b + 1]) b++;
+      g.addLayer(L.polyline(c, { renderer: canvas, color: DENS[b], weight: 3 + b * 1.4, opacity: 0.95, lineCap: "round", interactive: false }));
+    });
+    return g;
+  }
+  var kdeAll = densLayer(K.a, [0.3, 0.6, 1.0, 1.6, 2.6]);
+  var kdeKsi = densLayer(K.k, [0.06, 0.12, 0.2, 0.35, 0.6]);
+
+  // space-time hotspot areas
+  var EHC = { "Persistent": "#E23A3A", "Intensifying": "#E23A3A", "Consecutive": "#F2804F", "New": "#F7C060", "Sporadic": "#B7741C" };
+  var ehLayer = L.layerGroup();
+  H.c.forEach(function (c, i) {
+    var k = H.eh[i]; if (!EHC[k]) return;
+    ehLayer.addLayer(L.polygon(c, { renderer: canvas, color: EHC[k], weight: 1.2, fillColor: EHC[k], fillOpacity: k === "Persistent" ? 0.28 : 0.14, interactive: true })
+      .bindTooltip("<b>" + esc(k) + " hotspot</b><br>" + H.n[i] + " collisions in this 200 m cell, 2008–2017", { className: "tt", sticky: true }));
+  });
+
+  // collisions
+  var colLayer = L.layerGroup().addTo(map);
+  var marks = [];
+  for (var i = 0; i < NC; i++) {
+    var s = C.sev[i];
+    marks.push(L.circleMarker([C.lat[i], C.lon[i]], { renderer: canvas, radius: [3.2, 5, 6.5][s], color: "#0B1118", weight: 1.2,
+      fillColor: SEVHEX[s], fillOpacity: s === 0 ? 0.85 : 1 }).bindTooltip(function (i) { return function () { return colTip(i); }; }(i), { className: "tt", direction: "top", offset: [0, -4] }));
+  }
+  function nearestDuty(arr, idx) {
+    var best = Infinity, bi = -1;
+    for (var h = 0; h < arr.length; h++) if (state.duty[h] && arr[h][idx] < best) { best = arr[h][idx]; bi = h; }
+    return { d: best, i: bi };
+  }
+  function colTip(i) {
+    var n = nearestDuty(C.h, i);
+    var h = n.i >= 0 ? esc(M.duty[n.i].name) + " · " + fmtMin(mins(n.d)) + " min" : "no hospital ticked as on duty";
+    return "<b>" + SEVN[C.sev[i]] + "</b> · " + C.year[i] + (C.persons[i] > 1 ? " · " + C.persons[i] + " pedestrians" : "") +
+      "<br>" + esc(C.street[i]) + "<br><span class='muted'>Nearest on-duty hospital: " + h + "</span>";
+  }
+  function visible(i) { return C.year[i] >= state.y0 && C.year[i] <= state.y1 && state.sev[C.sev[i]]; }
+  function drawCollisions() {
+    var n = [0, 0, 0];
+    colLayer.clearLayers();
+    // draw slight first so the more severe sit on top
+    [0, 1, 2].forEach(function (sv) {
+      for (var i = 0; i < NC; i++) if (C.sev[i] === sv && visible(i)) { colLayer.addLayer(marks[i]); n[sv]++; }
+    });
+    $("k-all").textContent = fmt(n[0] + n[1] + n[2]);
+    [0, 1, 2].forEach(function (s) { $("k-" + s).textContent = fmt(n[s]); });
+    $("ncol").textContent = fmt(n[0] + n[1] + n[2]);
+    var tot = n[0] + n[1] + n[2] || 1;
+    $("split").innerHTML = [2, 1, 0].map(function (s) { return n[s] ? "<div style='flex:" + n[s] + ";background:" + SEVC[s] + "' title='" + SEVN[s] + ": " + n[s] + "'></div>" : ""; }).join("");
+    $("splitlab").innerHTML = [2, 1, 0].map(function (s) { return "<span>" + SEVN[s] + " " + (100 * n[s] / tot).toFixed(1) + "%</span>"; }).join("");
+    $("yearlabel").textContent = state.y0 === state.y1 ? String(state.y0) : state.y0 + "–" + state.y1;
+    $("selnote").textContent = state.y0 === state.y1 ? String(state.y0) : state.y0 + "–" + state.y1;
+  }
+
+  // facilities
+  var facLayer = L.layerGroup().addTo(map);
+  function facIcon(f) {
+    var cls = f.type === "hospital" ? "h" + (f.duty < 0 ? " o" : (state.duty[f.duty] ? "" : " off")) : f.type === "police" ? "p" : "f";
+    var txt = f.type === "hospital" ? "H" : f.type === "police" ? "P" : "<span>F</span>";
+    var sz = f.type === "hospital" ? 20 : 16;
+    return L.divIcon({ className: "", html: "<div class='fac " + cls + "' style='width:" + sz + "px;height:" + sz + "px'>" + txt + "</div>", iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2] });
+  }
+  function facLabel(f) {
+    var k = f.type === "hospital" ? (f.kind === "general" ? "Public general hospital" : f.kind === "children" ? "Children's hospitals" : "Other hospital or clinic (not on the duty rota here)") :
+      f.type === "police" ? "Police station" : "Fire station";
+    var duty = f.duty >= 0 ? (state.duty[f.duty] ? " · <b>on duty</b>" : " · not on duty") : "";
+    return "<b>" + esc(f.name) + "</b>" + (f.local && f.local !== f.name ? "<br>" + esc(f.local) : "") + "<br><span class='muted'>" + k + duty + "</span>";
+  }
+  var facMarks = F.map(function (f) {
+    return L.marker([f.lat, f.lon], { icon: facIcon(f), zIndexOffset: f.type === "hospital" ? 600 : 400, keyboard: false })
+      .bindTooltip(function () { return facLabel(f); }, { className: "tt", direction: "top", offset: [0, -8] });
+  });
+  facMarks.forEach(function (m) { facLayer.addLayer(m); });
+  function drawFacilities() { F.forEach(function (f, i) { if (f.type === "hospital") facMarks[i].setIcon(facIcon(f)); }); }
+
+  // live traffic
+  var traffic = null;
+  if (M.traffic_key) {
+    traffic = L.tileLayer("https://api.tomtom.com/traffic/map/4/tile/flow/relative0-dark/{z}/{x}/{y}.png?key=" + encodeURIComponent(M.traffic_key), {
+      maxZoom: 18, opacity: 0.9, attribution: "Live traffic &copy; TomTom" });
+    $("trafficnote").textContent = "Turn on Live traffic to see where it is slow right now.";
+  } else {
+    $("L-traffic").disabled = true;
+    $("trafficsmall").textContent = "needs a TomTom key";
+    $("trafficnote").textContent = "Live traffic can be switched on with a free TomTom key (see the README).";
+  }
+
+  // ---------------- year chart ----------------
+  function drawYears() {
+    var svg = $("yearchart"), W = svg.clientWidth || 340, Hh = 132, pad = { l: 26, r: 4, t: 8, b: 18 };
+    var max = Math.max.apply(null, M.by_year), top = Math.ceil(max / 50) * 50;
+    var bw = (W - pad.l - pad.r) / YEARS.length, ih = Hh - pad.t - pad.b;
+    var out = "";
+    [0, top / 2, top].forEach(function (v) {
+      var y = pad.t + ih - ih * v / top;
+      out += "<line x1='" + pad.l + "' x2='" + (W - pad.r) + "' y1='" + y + "' y2='" + y + "' stroke='#24303C' stroke-width='1'/>" +
+        "<text x='" + (pad.l - 5) + "' y='" + (y + 3.5) + "' text-anchor='end'>" + v + "</text>";
+    });
+    YEARS.forEach(function (yr, i) {
+      var x = pad.l + i * bw + 3, w = bw - 6, base = pad.t + ih, on = yr >= state.y0 && yr <= state.y1;
+      var parts = M.by_year_sev[i];
+      var g = "<g class='bar' data-y='" + yr + "' opacity='" + (on ? 1 : 0.3) + "'>";
+      g += "<rect x='" + (x - 3) + "' y='" + pad.t + "' width='" + bw + "' height='" + ih + "' fill='transparent'/>";
+      var yb = base;
+      [0, 1, 2].forEach(function (s) {
+        var v = state.sev[s] ? parts[s] : 0; if (!v) return;
+        var h = ih * v / top, gap = yb < base ? 1 : 0;
+        g += "<rect x='" + x + "' y='" + (yb - h + gap) + "' width='" + w + "' height='" + Math.max(h - gap, 0.5) + "' rx='" + (s === 0 ? 0 : 0) + "' fill='" + SEVHEX[s] + "'/>";
+        yb -= h;
+      });
+      g += "<text x='" + (x + w / 2) + "' y='" + (Hh - 4) + "' text-anchor='middle'>" + String(yr).slice(2) + "</text>";
+      g += "<title>" + yr + ": " + M.by_year[i] + " collisions (" + parts[2] + " killed, " + parts[1] + " serious, " + parts[0] + " slight)</title></g>";
+      out += g;
+    });
+    svg.setAttribute("viewBox", "0 0 " + W + " " + Hh);
+    svg.innerHTML = out;
+    svg.querySelectorAll(".bar").forEach(function (b) {
+      b.addEventListener("click", function () {
+        stopPlay();
+        var y = +b.getAttribute("data-y");
+        if (state.y0 === y && state.y1 === y) { state.y0 = YEARS[0]; state.y1 = YEARS[YEARS.length - 1]; }
+        else { state.y0 = state.y1 = y; }
+        refresh();
+      });
+    });
+  }
+
+  // ---------------- controls ----------------
+  $("sevchips").innerHTML = [2, 1, 0].map(function (s) {
+    return "<button class='chip' type='button' aria-pressed='true' data-s='" + s + "'><i class='dot' style='background:" + SEVC[s] + "'></i>" + (s === 2 ? "Killed" : SEVN[s]) + "</button>";
+  }).join("");
+  $("sevchips").querySelectorAll(".chip").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var s = +b.getAttribute("data-s"); state.sev[s] = !state.sev[s];
+      if (!state.sev.some(Boolean)) state.sev[s] = true;
+      b.setAttribute("aria-pressed", state.sev[s]); refresh();
+    });
+  });
+  var dutyOrder = M.duty.map(function (h, i) { return i; }).sort(function (a, b) {
+    var ka = M.duty[a].kind === "children" ? 1 : 0, kb = M.duty[b].kind === "children" ? 1 : 0;
+    return ka - kb || M.duty[a].name.localeCompare(M.duty[b].name); });
+  $("hosplist").innerHTML = dutyOrder.map(function (i) { var h = M.duty[i];
+    return "<label><input type='checkbox' data-h='" + i + "'" + (state.duty[i] ? " checked" : "") + "> " + esc(h.name) +
+      (h.kind === "children" ? "<span class='tag'>children</span>" : "") + "</label>";
+  }).join("");
+  $("hosplist").querySelectorAll("input").forEach(function (cb) {
+    cb.addEventListener("change", function () { state.duty[+cb.getAttribute("data-h")] = cb.checked; dutyChanged(); });
+  });
+  function setAllDuty(v) {
+    state.duty = state.duty.map(function () { return v; });
+    $("hosplist").querySelectorAll("input").forEach(function (cb) { cb.checked = v; });
+    dutyChanged();
+  }
+  $("hall").addEventListener("click", function (e) { e.preventDefault(); setAllDuty(true); });
+  $("hnone").addEventListener("click", function (e) { e.preventDefault(); setAllDuty(false); });
+  function dutyChanged() { drawResponse(); drawFacilities(); if (state.incident) showIncident(state.incident); }
+  $("respseg").querySelectorAll("button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      state.resp = b.getAttribute("data-v");
+      $("respseg").querySelectorAll("button").forEach(function (o) { o.setAttribute("aria-pressed", o === b); });
+      drawResponse(); drawLegend();
+    });
+  });
+  $("speed").addEventListener("change", function () { state.speed = +this.value; drawResponse(); if (state.incident) showIncident(state.incident); });
+  function toggle(id, layer) { $(id).addEventListener("change", function () { this.checked ? layer.addTo(map) : map.removeLayer(layer); }); }
+  toggle("L-col", colLayer); toggle("L-kde", kdeAll); toggle("L-ksi", kdeKsi); toggle("L-eh", ehLayer); toggle("L-fac", facLayer);
+  if (traffic) toggle("L-traffic", traffic);
+  $("allyears").addEventListener("click", function () { stopPlay(); state.y0 = YEARS[0]; state.y1 = YEARS[YEARS.length - 1]; refresh(); });
+  function stopPlay() { if (state.playing) { clearInterval(state.playing); state.playing = null; $("play").textContent = "▶ Play years"; } }
+  $("play").addEventListener("click", function () {
+    if (state.playing) { stopPlay(); return; }
+    var k = 0; $("play").textContent = "❚❚ Pause";
+    var step = function () { state.y0 = state.y1 = YEARS[k]; refresh(); k++; if (k >= YEARS.length) { stopPlay(); } };
+    step(); state.playing = setInterval(step, 1300);
+  });
+
+  // ---------------- click: incident panel ----------------
+  var grid = {}, G = 0.002;
+  function gkey(la, lo) { return Math.floor(la / G) + ":" + Math.floor(lo / G); }
+  S.c.forEach(function (c, i) {
+    var seen = {};
+    c.forEach(function (p) { var k = gkey(p[0], p[1]); if (!seen[k]) { seen[k] = 1; (grid[k] = grid[k] || []).push(i); } });
+  });
+  var kx = Math.cos(37.98 * Math.PI / 180);
+  function segDist(p, a, b) {
+    var ax = a[1] * kx, ay = a[0], bx = b[1] * kx, by = b[0], px = p[1] * kx, py = p[0];
+    var dx = bx - ax, dy = by - ay, t = dx || dy ? ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy) : 0;
+    t = Math.max(0, Math.min(1, t));
+    var x = ax + t * dx - px, y = ay + t * dy - py;
+    return Math.sqrt(x * x + y * y) * 111320;
+  }
+  function nearestStreet(la, lo) {
+    var best = Infinity, bi = -1, r = Math.floor(la / G), c = Math.floor(lo / G);
+    for (var a = -1; a <= 1; a++) for (var b = -1; b <= 1; b++) {
+      (grid[(r + a) + ":" + (c + b)] || []).forEach(function (i) {
+        var cc = S.c[i];
+        for (var k = 0; k < cc.length - 1; k++) { var d = segDist([la, lo], cc[k], cc[k + 1]); if (d < best) { best = d; bi = i; } }
+      });
+    }
+    return { i: bi, d: best };
+  }
+  function metres(a, b) { var x = (a[1] - b[1]) * kx, y = a[0] - b[0]; return Math.sqrt(x * x + y * y) * 111320; }
+  function inPoly(p, poly) {
+    var inside = false;
+    for (var i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      var yi = poly[i][0], xi = poly[i][1], yj = poly[j][0], xj = poly[j][1];
+      if (((yi > p[0]) !== (yj > p[0])) && (p[1] < (xj - xi) * (p[0] - yi) / (yj - yi) + xi)) inside = !inside;
+    }
+    return inside;
+  }
+  var pin = null, toHosp = null;
+  function showIncident(ll) {
+    state.incident = ll;
+    var p = [ll.lat, ll.lng], ns = nearestStreet(p[0], p[1]), box = $("incident");
+    if (pin) map.removeLayer(pin); if (toHosp) map.removeLayer(toHosp);
+    pin = L.marker(ll, { icon: L.divIcon({ className: "", html: "<div class='pin'></div>", iconSize: [18, 18], iconAnchor: [9, 9] }), zIndexOffset: 1000 }).addTo(map);
+    box.classList.add("on");
+    if (ns.i < 0 || ns.d > 250) {
+      box.innerHTML = "<div class='inc-h'><b>Outside the study streets</b><a href='#' id='incx'>close</a></div><p class='hint'>The street network covers the Municipality of Athens. Click a street inside the dashed boundary.</p>";
+      $("incx").addEventListener("click", closeIncident); return;
+    }
+    var i = ns.i, rows = [];
+    for (var h = 0; h < S.h.length; h++) if (state.duty[h]) rows.push({ name: M.duty[h].name, d: S.h[h][i] });
+    rows.sort(function (a, b) { return a.d - b.d; });
+    // collisions nearby
+    var near = 0, nk = 0, last = 0, street = {}, ksiYears = [];
+    for (var c = 0; c < NC; c++) {
+      if (metres(p, [C.lat[c], C.lon[c]]) <= 150) {
+        near++; if (C.sev[c] > 0) nk++; if (C.year[c] > last) last = C.year[c];
+        var st = C.street[c].replace(/\s+\d.*$/, ""); street[st] = (street[st] || 0) + 1;
+      }
+    }
+    var stName = Object.keys(street).sort(function (a, b) { return street[b] - street[a]; })[0];
+    var eh = "";
+    for (var k = 0; k < H.c.length; k++) if (EHC[H.eh[k]] && inPoly(p, H.c[k])) { eh = H.eh[k]; break; }
+    var html = "<div class='inc-h'><b>" + (stName ? esc(stName) : "Selected location") + "</b><a href='#' id='incx'>close</a></div>";
+    html += "<p class='muted' style='margin:2px 0 0'>" + (ns.d > 40 ? "Nearest street " + Math.round(ns.d) + " m away · " : "") + "at " + state.speed + " km/h, no traffic</p>";
+    if (rows.length) {
+      html += "<div class='rank'>" + rows.slice(0, 3).map(function (r, n) {
+        return "<div><span class='fac h' style='width:16px;height:16px;font-size:9px'>H</span><span>" + esc(r.name) + "</span><span class='t'>" + fmtMin(mins(r.d)) + " min <span class='k'>" + (r.d / 100).toFixed(1) + " km</span></span></div>";
+      }).join("") + "</div>";
+    } else html += "<p class='hint' style='margin:8px 0'>No hospital is ticked as on duty.</p>";
+    html += "<div class='rank'>" +
+      "<div><span class='fac p' style='width:14px;height:14px;font-size:8px'>P</span><span>Nearest police station</span><span class='t'>" + fmtMin(mins(S.p[i])) + " min <span class='k'>" + (S.p[i] / 100).toFixed(1) + " km</span></span></div>" +
+      "<div><span class='fac f' style='width:12px;height:12px;font-size:7px'><span>F</span></span><span>Nearest fire station</span><span class='t'>" + fmtMin(mins(S.f[i])) + " min <span class='k'>" + (S.f[i] / 100).toFixed(1) + " km</span></span></div></div>";
+    html += "<p style='margin:6px 0 0;font-size:13px'><b>" + near + "</b> pedestrian collision" + (near === 1 ? "" : "s") + " within 150 m, 2008–2017" +
+      (near ? " (" + nk + " killed or seriously injured; latest " + last + ")" : "") + "." + (eh ? " This spot is in a <b>" + eh.toLowerCase() + " hotspot</b> area." : "") + "</p>";
+    box.innerHTML = html;
+    $("incx").addEventListener("click", closeIncident);
+    if (rows.length) {
+      var fh = F.filter(function (f) { return f.duty >= 0 && M.duty[f.duty].name === rows[0].name; })[0];
+      if (fh) toHosp = L.layerGroup([
+        L.polyline([p, [fh.lat, fh.lon]], { color: "#0B1118", weight: 5, opacity: 0.8, interactive: false }),
+        L.polyline([p, [fh.lat, fh.lon]], { color: "#FFFFFF", weight: 2.2, dashArray: "6 6", interactive: false })]).addTo(map);
+    }
+    if (window.innerWidth <= 860) box.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  function closeIncident(e) {
+    if (e) e.preventDefault();
+    state.incident = null; $("incident").classList.remove("on");
+    if (pin) map.removeLayer(pin); if (toHosp) map.removeLayer(toHosp); pin = toHosp = null;
+  }
+  map.on("click", function (e) { showIncident(e.latlng); });
+
+  var Hint = L.Control.extend({ options: { position: "topright" }, onAdd: function () {
+    var d = L.DomUtil.create("div", "maphint"); d.textContent = "Click a street to check the response from there"; return d; } });
+  map.addControl(new Hint());
+
+  function refresh() { drawCollisions(); drawYears(); }
+  drawLegend(); drawResponse(); refresh();
+  window.addEventListener("resize", drawYears);
+})();
+</script>
+</body>
+</html>

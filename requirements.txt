@@ -1,0 +1,11 @@
+geopandas>=0.14
+pyogrio
+shapely>=2
+numpy
+pandas
+scipy
+networkx
+libpysal
+esda
+statsmodels
+mgwr
