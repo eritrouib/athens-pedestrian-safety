@@ -79,6 +79,9 @@ th { font-weight: 600; color: var(--ink-2); font-size: 13px; }
 .tile { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; padding: 14px; }
 .tile b { display: block; font-family: "GFS Didot", Georgia, serif; font-size: 40px; line-height: 1; font-weight: 400; }
 .tile span { font-size: 13.5px; color: var(--ink-2); }
+.bvleg { display: grid; grid-template-columns: auto auto; justify-content: start; gap: 6px 10px; align-items: center; margin-top: 12px; font-size: 12.5px; color: var(--ink-2); }
+.bvgrid { display: grid; grid-template-columns: repeat(3, 18px); grid-template-rows: repeat(3, 18px); gap: 2px; }
+.bvgrid i { display: block; border-radius: 2px; }
 /* scrollytelling */
 .scrolly { position: relative; display: grid; grid-template-columns: minmax(320px, 440px) 1fr; gap: 0; margin: 20px 0; }
 .scrolly .map { position: sticky; top: 49px; height: calc(100vh - 49px); grid-column: 2; grid-row: 1; border-left: 1px solid var(--rule); }
@@ -132,14 +135,14 @@ footer .prose { padding: 0; }
 <body>
 <div class="topbar">
   <a href="https://etymo.co.uk" class="brand" title="Made by Eriola Trungu Impersimi">@ET</a>
-  <nav><a class="hide-sm" href="#where">Where</a><a class="hide-sm" href="#time">Over time</a><a class="hide-sm" href="#around">What's around</a><a class="hide-sm" href="#help">Reaching help</a><a href="index.html"><b>Open the dashboard →</b></a></nav>
+  <nav><a class="hide-sm" href="#where">Where</a><a class="hide-sm" href="#time">Over time</a><a class="hide-sm" href="#around">What's around</a><a class="hide-sm" href="#sc5">Bivariate maps</a><a class="hide-sm" href="#help">Reaching help</a><a href="index.html"><b>Open the dashboard →</b></a></nav>
 </div>
 
 <header class="cover">
   <div class="cover-in">
     <div class="kicker">Athens · 2008–2017</div>
     <h1>Ten years of pedestrian collisions in Athens</h1>
-    <p class="lede">Where pedestrians were hit, which streets kept coming back year after year, what surrounds those places, and how far help was along the streets.</p>
+    <p class="lede">Where pedestrians were hit in Athens, which streets kept coming back year after year, what's around them, and how far help was.</p>
     <div class="byline">By Eriola Trungu Impersimi · from my MSc thesis in Geoinformatics (NTUA, 2021), re-analysed in Python in 2026</div>
     <div class="stats">
       <div><b id="s-total">1,318</b><span>pedestrian collisions</span></div>
@@ -154,8 +157,8 @@ footer .prose { padding: 0; }
 <section class="prose chapter" id="numbers">
   <div class="num">1 · The numbers</div>
   <h2>A decade that got safer, unevenly</h2>
-  <p>Between 2008 and 2017 the police recorded <b>1,318</b> collisions in the Municipality of Athens in which a pedestrian was hurt. Most were slight injuries: 1,208 of them. Eighty pedestrians were seriously injured and thirty were killed. In 68 collisions two people on foot were hurt, and in nine, three or four.</p>
-  <p>The yearly count held at around 180 until 2011, then fell sharply, to 98 in 2013 and 81 by 2017. The economic crisis took cars off the road: car numbers were reported to have fallen by more than 58% in 2011. At the same time, Greece invested in road safety, and in 2021 it received the European Transport Safety Council's award for halving road deaths between 2010 and 2020.</p>
+  <p>Between 2008 and 2017 the police recorded <b>1,318</b> collisions in the Municipality of Athens where a pedestrian was hurt. Most of them, 1,208, were slight injuries. Eighty pedestrians were seriously injured and thirty were killed. In 68 collisions two people on foot were hurt, and in nine of them three or four.</p>
+  <p>Until 2011 there were about 180 a year. Then the number dropped quickly, to 98 in 2013 and 81 in 2017. The economic crisis took a lot of cars off the road: car numbers were reported to have fallen by more than 58% in 2011. Greece also invested in road safety in those years, and in 2021 it received the European Transport Safety Council's award for halving road deaths between 2010 and 2020.</p>
   <figure class="card">
     <p class="chart-title">Pedestrian collisions per year, by severity</p>
     <p class="chart-sub" id="trendnote"></p>
@@ -163,25 +166,25 @@ footer .prose { padding: 0; }
     <svg id="yearsvg" width="100%" height="270" role="img" aria-label="Bar chart of collisions per year by severity"></svg>
     <figcaption>Source: Hellenic Statistical Authority, from Hellenic Police records. Three collisions have no usable location and are left out of the maps that follow.</figcaption>
   </figure>
-  <p>The more severe collisions fell faster still: 15 killed or seriously injured in 2008, two in 2017. With so few, though, single years jump around, so the maps below use all ten years together.</p>
+  <p>The most serious collisions fell even faster, from 15 killed or seriously injured in 2008 to two in 2017. With so few, single years jump around a lot, so in the maps below I use all ten years together.</p>
 </section>
 
 <section id="where">
   <div class="prose chapter" style="padding-bottom:0">
     <div class="num">2 · Where</div>
     <h2>The streets where it keeps happening</h2>
-    <p>A collision can only happen on a street, so its pattern should be measured along the streets. Each step below changes the map.</p>
+    <p>A pedestrian can only be hit on a street, so I measured the pattern along the streets. As you scroll, the map changes.</p>
   </div>
   <div class="scrolly" id="sc1">
     <div class="map"><div id="map1"></div></div>
     <div class="steps">
-      <div class="step" data-step="dots"><h3>Every collision</h3><p>Each dot is one collision, coloured by how badly the pedestrian was hurt. They follow the big avenues and the dense centre: Patision, Athinas, Peiraios, Alexandras and Syggrou.</p>
+      <div class="step" data-step="dots"><h3>Every collision</h3><p>Each dot is one collision, coloured by how badly the pedestrian was hurt. You can see straight away that they follow the big avenues and the busy centre: Patision, Athinas, Peiraios, Alexandras and Syggrou.</p>
         <div class="legend"><span><i class="ring" style="background:var(--sev-2)"></i>Killed</span><span><i class="ring" style="background:var(--sev-1)"></i>Serious</span><span><i class="ring" style="background:var(--sev-0)"></i>Slight</span></div></div>
-      <div class="step" data-step="kde"><h3>Density along the streets</h3><p>In the thesis I used kernel density, which spreads each collision in a circle across buildings and squares. Here the density runs <b>along the street network</b> instead: every street is cut into 50 m pieces, and each collision counts for the pieces within 250 m of walking distance. The brightest pieces see about seven collisions per kilometre of street per year.</p>
+      <div class="step" data-step="kde"><h3>Density along the streets</h3><p>In the thesis I used kernel density, which spreads each collision out in a circle, over buildings and squares too. This time I measured the density <b>along the streets</b>. I cut every street into 50 m pieces, and each collision counts for the pieces within 250 m walking distance. The brightest pieces have about seven collisions per kilometre of street a year.</p>
         <div class="legend" id="kdelegend"></div></div>
-      <div class="step" data-step="centre"><h3>The centre around Omonia</h3><p>The densest street in Athens is <b>Patision near Omonia and Aiolou</b>: 25 collisions within 150 m in ten years. Athinas, Peiraios and the start of 28is Oktovriou follow close behind. These streets are busy at every hour, lined with shops, and people cross away from the crossings.</p></div>
-      <div class="step" data-step="ksi"><h3>Where people were killed or seriously injured</h3><p>The 109 most serious collisions follow a different map: wide, fast avenues. <b>Alexandras</b>, <b>Vasilissis Sofias</b> and <b>Galatsiou</b> lead, the same pattern the thesis found. Speed decides how badly someone is hurt.</p></div>
-      <div class="step" data-step="top"><h3>The ten busiest spots</h3><p>The ten densest stretches, at least 600 m apart, named after the streets of the collisions around them:</p><ol id="toplist" style="margin:0;padding-left:22px;font-size:15px"></ol></div>
+      <div class="step" data-step="centre"><h3>The centre around Omonia</h3><p>The densest street in Athens is <b>Patision, near Omonia and Aiolou</b>, with 25 collisions within 150 m in ten years. Athinas, Peiraios and the start of 28is Oktovriou come right after. These streets are busy at all hours and full of shops, and people cross wherever they can, not only at the crossings.</p></div>
+      <div class="step" data-step="ksi"><h3>Where people were killed or seriously injured</h3><p>The 109 most serious collisions show a different map. They follow the wide, fast avenues: <b>Alexandras</b>, <b>Vasilissis Sofias</b> and <b>Galatsiou</b>, the same as I found in the thesis. The faster the car, the worse the injury.</p></div>
+      <div class="step" data-step="top"><h3>The ten busiest spots</h3><p>These are the ten densest stretches, at least 600 m apart, named after the streets of the collisions around them:</p><ol id="toplist" style="margin:0;padding-left:22px;font-size:15px"></ol></div>
     </div>
   </div>
 </section>
@@ -190,17 +193,17 @@ footer .prose { padding: 0; }
   <div class="prose chapter" style="padding-bottom:0">
     <div class="num">3 · Over time</div>
     <h2>Persistent, new and fading hotspots</h2>
-    <p>A hotspot that appears every year needs a different response from one that showed up recently. The thesis used ArcGIS's space-time cube for this. I rebuilt the same logic in Python, on the same 200 m hexagons.</p>
+    <p>A place that is a hotspot every year needs a different response from a place that only became one recently. In the thesis I used ArcGIS's space-time cube for this. This time I rebuilt the same method in Python, on the same 200 m hexagons.</p>
   </div>
   <div class="scrolly" id="sc2">
     <div class="map"><div id="map2"></div></div>
     <div class="steps">
-      <div class="step" data-step="eh"><h3>Hotspots, year by year</h3><p>For each year, every hexagon is tested for being a statistically significant hotspot (Getis-Ord Gi*), and its trend across the decade is checked with a Mann-Kendall test. <b id="eh-persist">20</b> hexagons are <b>persistent</b> hotspots, hot in at least nine of ten years. Thirteen of them sit around <b>Omonia</b>, matching the thesis.</p>
+      <div class="step" data-step="eh"><h3>Hotspots, year by year</h3><p>For every year, I tested each hexagon to see if it's a significant hotspot (Getis-Ord Gi*), and then checked its trend over the ten years with a Mann-Kendall test. <b id="eh-persist">20</b> hexagons are <b>persistent</b> hotspots, which means they were hot in at least nine of the ten years. Thirteen of them are around <b>Omonia</b>, the same as in the thesis.</p>
         <div class="legend"><span><i style="background:#A0202E"></i>Persistent</span><span><i style="background:#D8692A"></i>Consecutive</span><span><i style="background:#8A6A00"></i>New</span><span><i style="background:#C9B9A6"></i>Sporadic</span></div></div>
-      <div class="step" data-step="eh-north"><h3>The north is where it grew</h3><p>More than half of the <b>new</b> and <b>consecutive</b> hotspots, hot in the last years but not before, are in the northern districts: along Patision towards Galatsiou, and around Kypseli. The thesis flagged these areas as intensifying. They are the places where action now would do the most good.</p></div>
-      <div class="step" data-step="lisa"><h3>Clusters and outliers</h3><p>Local Moran's I asks whether a hexagon looks like its neighbours. <b id="lisa-hh">90</b> high-high cells form the core clusters: a lot of collisions surrounded by a lot of collisions. The few high-low cells are isolated problem spots in otherwise quiet streets.</p>
+      <div class="step" data-step="eh-north"><h3>The north is where it grew</h3><p>More than half of the <b>new</b> and <b>consecutive</b> hotspots, the ones that only became hot in the last years, are in the northern districts: along Patision towards Galatsiou, and around Kypseli. In the thesis these areas came out as intensifying too. This is where action now would help the most.</p></div>
+      <div class="step" data-step="lisa"><h3>Clusters and outliers</h3><p>Local Moran's I checks whether a hexagon is similar to its neighbours. <b id="lisa-hh">90</b> high-high hexagons form the main clusters, with a lot of collisions surrounded by a lot of collisions. The few high-low hexagons are single problem spots in otherwise quiet streets.</p>
         <div class="legend"><span><i style="background:#A0202E"></i>High-high</span><span><i style="background:#E7A0A8"></i>High-low</span><span><i style="background:#8FB3DA"></i>Low-high</span><span><i style="background:#2F6FB3"></i>Low-low</span></div></div>
-      <div class="step" data-step="centres"><h3>The centre of gravity barely moves</h3><p>The mean centre of each year's collisions stays within a few hundred metres, just north-east of Omonia towards Exarcheia, moving slightly north in the later years, as collisions fell faster in the centre than in the northern neighbourhoods.</p></div>
+      <div class="step" data-step="centres"><h3>The centre hardly moves</h3><p>The centre of each year's collisions hardly moves. It stays within a few hundred metres, just north-east of Omonia towards Exarcheia, and moves a little north in the later years, because collisions fell faster in the centre than in the northern neighbourhoods.</p></div>
     </div>
   </div>
 </section>
@@ -208,7 +211,7 @@ footer .prose { padding: 0; }
 <section class="prose chapter" id="places">
   <div class="num">4 · On the ground</div>
   <h2>Ten places I looked at</h2>
-  <p>For the thesis I visited ten of the worst places on Street View: eight persistent and two intensifying hotspots. They have a lot in common: several lanes, traffic lights and crossings, shops, bus stops, and people crossing wherever they can. Each card links to the Street View image used in the thesis. The count is the number of collisions within 150 m in this re-analysis.</p>
+  <p>For the thesis I looked at ten of the worst places on Street View: eight persistent and two intensifying hotspots. They have a lot in common: several lanes, traffic lights and crossings, shops, bus stops, and people crossing wherever they can. Each card links to the Street View image I used in the thesis. The number is how many collisions there were within 150 m in this re-analysis.</p>
   <div class="places" id="placelist"></div>
 </section>
 
@@ -216,14 +219,29 @@ footer .prose { padding: 0; }
   <div class="prose chapter">
     <div class="num">5 · What's around</div>
     <h2>Busy places, not bars</h2>
-    <p>The thesis looked at four kinds of places around the collisions: <b>alcohol venues</b> (bars, pubs, clubs), <b>education</b> (schools and colleges), <b>traffic points</b> (crossings, signals, stops) and <b>transport points</b> (bus, tram and metro stops, taxi ranks). The first test is simple: how many of each lie within 100, 250 and 500 m walking distance of a collision?</p>
+    <p>In the thesis I looked at four kinds of places around the collisions: <b>alcohol venues</b> (bars, pubs, clubs), <b>education</b> (schools and colleges), <b>traffic points</b> (crossings, signals, stops) and <b>transport points</b> (bus, tram and metro stops, taxi ranks). First, I counted how many of each are within 100, 250 and 500 m walking distance of a collision.</p>
     <figure class="card">
       <p class="chart-title">Points of interest by walking distance from the nearest collision</p>
       <p class="chart-sub">Measured along the streets, inside the Municipality of Athens</p>
       <div id="zonetable"></div>
-      <figcaption>The thesis found 48% within 100 m and 41% within 100–250 m, using ArcGIS service areas. Walking distances along the network give a similar picture. The 317 alcohol venues match the thesis exactly.</figcaption>
+      <figcaption>In the thesis, 48% were within 100 m and 41% within 100–250 m, using ArcGIS service areas. Walking distances along the network give a similar picture, and the 317 alcohol venues are exactly the same as in the thesis.</figcaption>
     </figure>
-    <p>But closeness alone can mislead. The centre has many bars <i>and</i> many people, buses and crossings, so bars would sit near collisions even if they had nothing to do with them. A fairer test counts collisions in each 200 m hexagon, allows for how much street it has, and puts all four kinds of place into one model together. This is a negative binomial regression, the standard model for counts like these.</p>
+    <p>Then, like in the thesis, I made <b>bivariate maps</b>. A bivariate map shows two things at once: here, how many collisions a hexagon has, and how many of one kind of place. The two colour scales mix, so the dark purple hexagons are where both are high. They're my favourite maps from the thesis.</p>
+  </div>
+  <div class="scrolly" id="sc5">
+    <div class="map"><div id="map5"></div></div>
+    <div class="steps">
+      <div class="step" data-step="bv-Alcohol"><h3>Collisions and bars</h3><p>Most hexagons have no bars at all, so most of the map is grey or pink. The dark hexagons, with many bars and many collisions, are in the centre, around Psyrri, Monastiraki, Syntagma and Exarcheia, with a few towards Syggrou and Ampelokipoi. The thesis found almost the same places.</p><div class="bvleg" data-x="bars"></div></div>
+      <div class="step" data-step="bv-Transport"><h3>Collisions and transport stops</h3><p>With bus, tram and metro stops, the dark hexagons spread much further: around Omonia, but also along Patision and in Exarcheia. Where there are stops, there are people crossing.</p><div class="bvleg" data-x="transport stops"></div></div>
+      <div class="step" data-step="bv-Traffic"><h3>Collisions and traffic points</h3><p>Crossings and traffic signals give the most dark hexagons of all: <b id="bv-traffic-mm">102</b> hexagons with many of both, all over the city, but mostly in the centre, Patisia, Kypseli and Ampelokipoi.</p><div class="bvleg" data-x="traffic points"></div></div>
+      <div class="step" data-step="bv-Education"><h3>Collisions and schools</h3><p>Schools are the opposite. Only <b id="bv-edu-mm">6</b> hexagons have many schools and many collisions, and they're scattered around. In the thesis the link with education was weak too.</p><div class="bvleg" data-x="schools"></div></div>
+      <div class="step" data-step="bvl-Traffic"><h3>Bivariate Local Moran's I</h3><p>In the thesis I also used bivariate Local Moran's I. It asks whether hexagons with many traffic points are surrounded by hexagons with many collisions. The high-high clusters are around Omonia and Exarcheia, and then in Ampelokipoi and Patisia.</p>
+        <div class="legend"><span><i style="background:#A0202E"></i>High-high</span><span><i style="background:#E7A0A8"></i>High-low</span><span><i style="background:#8FB3DA"></i>Low-high</span><span><i style="background:#2F6FB3"></i>Low-low</span></div></div>
+      <div class="step" data-step="bvl-Alcohol"><h3>And for bars</h3><p>For bars the high-high clusters are much smaller, only <b id="bvl-alc-hh">16</b> hexagons, mostly around Omonia and Exarcheia. Bars and collisions meet in the centre, but not much anywhere else.</p></div>
+    </div>
+  </div>
+  <div class="prose">
+    <p>But a map can't tell us if bars cause collisions. The centre has many bars <i>and</i> many people, buses and crossings, so bars would be close to collisions even if they had nothing to do with them. So I also tested it in a fairer way. I counted the collisions in each 200 m hexagon, took into account how much street it has, and put all four kinds of place into one model together. This is a negative binomial regression, the usual model for counts like these.</p>
     <figure class="card">
       <p class="chart-title">How much more likely collisions are, for each kind of place</p>
       <p class="chart-sub">Rate ratio for one standard deviation more of each, with 95% confidence intervals. 1 means no difference.</p>
@@ -231,13 +249,13 @@ footer .prose { padding: 0; }
       <svg id="forest" width="100%" height="230" role="img" aria-label="Rate ratios with confidence intervals"></svg>
       <figcaption id="forestcap"></figcaption>
     </figure>
-    <p class="pull">Once busyness is accounted for, bars and schools no longer explain where collisions happen. Crossings, signals and bus stops do: they mark where people and traffic meet.</p>
-    <p>That doesn't make crossings dangerous: they are where people cross. It means the risk follows the volume of people meeting traffic, and the fix is in how those meeting points are designed. The thesis then used Geographically Weighted Regression to see where each relationship is strongest. The map below repeats that for traffic points.</p>
+    <p class="pull">Once I took into account how busy a place is, bars and schools no longer explained where collisions happen. Crossings, signals and bus stops did, because that's where people and traffic meet.</p>
+    <p>That doesn't mean crossings are dangerous. They're where people cross. It means the risk follows how many people meet traffic, so the fix is in how those meeting points are designed. In the thesis I then used Geographically Weighted Regression to see where each link is strongest. The map below does the same for traffic points.</p>
   </div>
   <div class="scrolly" id="sc3">
     <div class="map"><div id="map3"></div></div>
     <div class="steps">
-      <div class="step" data-step="gwr-traffic"><h3>Where traffic points matter most</h3><p>Geographically Weighted Regression gives each hexagon its own rate ratio. Darker hexagons are where a cell with more crossings and signals has many more collisions than its neighbours; hexagons that aren't significant are left blank.</p><div class="legend" id="gwrlegend"></div></div>
+      <div class="step" data-step="gwr-traffic"><h3>Where traffic points matter most</h3><p>Geographically Weighted Regression gives every hexagon its own rate ratio. The darker the hexagon, the more collisions come with more crossings and signals there. Hexagons that aren't significant are left blank.</p><div class="legend" id="gwrlegend"></div></div>
       <div class="step" data-step="gwr-transport"><h3>And transport stops</h3><p>The same for bus, tram and metro stops. The link is significant across much of the city, and most often in the northern districts.</p></div>
     </div>
   </div>
@@ -247,31 +265,31 @@ footer .prose { padding: 0; }
   <div class="prose chapter">
     <div class="num">6 · Reaching help</div>
     <h2>How far help was</h2>
-    <p>The thesis ended with an emergency dashboard: collisions, hospitals, police and fire stations, and Esri's live traffic layer, so a control room could judge how long an ambulance would take. Here the street network does that work. For every collision I measured the drive along the streets to the nearest public general hospital, police station and fire station, at an average of <span class="speed">30</span> km/h and with no traffic.</p>
+    <p>The thesis ended with an emergency dashboard: collisions, hospitals, police and fire stations, and Esri's live traffic layer, so a control room could see how long an ambulance might take. This time the street network does that work. For every collision I measured the drive along the streets to the nearest public general hospital, police station and fire station, at an average of <span class="speed">30</span> km/h and with no traffic.</p>
     <div class="tiles" id="tiles"></div>
-    <p style="margin-top:18px">Athens has a particular complication: public hospitals take turns on emergency duty (εφημερίες), so the nearest hospital that will take a patient changes from day to day. The dashboard lets you tick which hospitals are on duty and recalculates every time on the map.</p>
+    <p style="margin-top:18px">Athens has one extra complication: the public hospitals take turns on emergency duty (εφημερίες), so the nearest hospital that will take a patient changes from day to day. In the dashboard you can tick which hospitals are on duty, and all the times on the map are recalculated.</p>
   </div>
   <div class="scrolly" id="sc4">
     <div class="map"><div id="map4"></div></div>
     <div class="steps">
-      <div class="step" data-step="resp-h"><h3>Minutes to the nearest hospital</h3><p>Streets coloured by the drive to the nearest public general hospital, assuming all are open. The eastern districts, near Evangelismos, Ippokrateio, Laiko and Elpis, are within a few minutes. The far west, around Kolonos, Sepolia, Iera Odos and Athinon Avenue, is furthest away: a median of about 8 minutes, against under 1 minute in the east.</p><div class="legend" id="resplegend"></div></div>
-      <div class="step" data-step="resp-h-west"><h3>When only one hospital is on duty</h3><p>If Evangelismos were the only hospital on duty, collisions in the far west of the municipality would be <b id="evonly">over 10</b> minutes away even without traffic. That's why the rota matters, and why live traffic would make it worse.</p></div>
-      <div class="step" data-step="resp-f"><h3>Fire and rescue</h3><p>OpenStreetMap shows only two fire stations in or near the municipality, so these times are an upper limit. If the data is incomplete, the real times are shorter.</p></div>
+      <div class="step" data-step="resp-h"><h3>Minutes to the nearest hospital</h3><p>Here the streets are coloured by the drive to the nearest public general hospital, if they're all open. The eastern districts, near Evangelismos, Ippokrateio, Laiko and Elpis, are only a few minutes away. The far west, around Kolonos, Sepolia, Iera Odos and Athinon Avenue, is the furthest, with a median of about 8 minutes, against under 1 minute in the east.</p><div class="legend" id="resplegend"></div></div>
+      <div class="step" data-step="resp-h-west"><h3>When only one hospital is on duty</h3><p>If Evangelismos were the only hospital on duty, collisions in the far west of the municipality would be <b id="evonly">over 10</b> minutes away, even with no traffic. That's why the rota matters, and with traffic it would be even longer.</p></div>
+      <div class="step" data-step="resp-f"><h3>Fire and rescue</h3><p>OpenStreetMap shows only two fire stations in or near the municipality, so these times are the worst case. If stations are missing from the data, the real times are shorter.</p></div>
     </div>
   </div>
   <div class="prose">
-    <div class="cta"><p><b>Try it yourself.</b> Click anywhere in Athens to see the nearest on-duty hospitals, police and fire stations, and the collision history around that spot.</p><a href="index.html">Open the dashboard →</a></div>
+    <div class="cta"><p><b>Try it yourself.</b> Click anywhere in Athens to see the nearest hospitals on duty, police and fire stations, and the collisions around that spot.</p><a href="index.html">Open the dashboard →</a></div>
   </div>
 </section>
 
 <section class="prose chapter" id="next">
   <div class="num">7 · What would help</div>
   <h2>What the evidence points to</h2>
-  <p>The thesis closed with three observations that this re-analysis supports:</p>
-  <p><b>The meeting points need redesigning.</b> The persistent hotspots are wide streets with many lanes, where crossings sit far apart and people cross between them. Narrower crossings, refuge islands, longer green time for pedestrians and lower speeds on the avenues address where the risk actually is.</p>
-  <p><b>The north deserves attention now.</b> While the centre improved, new and consecutive hotspots appeared around Patision, Galatsiou and Kypseli.</p>
-  <p><b>Culture matters too.</b> Drivers often don't give way, and jaywalking is common. Education and enforcement work alongside design, not instead of it.</p>
-  <p>What the data can't say: it has only the year of each collision, not the day or hour, nor the age of the pedestrian or the type of vehicle. With those, the same methods could tell night-time collisions near bars from school-run collisions, as my <a href="https://etymo.co.uk/london-pedestrian-safety/">London project</a> does with British police data.</p>
+  <p>In the thesis I ended with three suggestions, and this re-analysis supports them:</p>
+  <p><b>Redesign the places where people and traffic meet.</b> The persistent hotspots are wide streets with many lanes, where crossings are far apart and people cross in between. Narrower crossings, refuge islands, more green time for pedestrians and lower speeds on the avenues would help where the risk actually is.</p>
+  <p><b>Look at the north now.</b> While the centre got better, new and consecutive hotspots appeared around Patision, Galatsiou and Kypseli.</p>
+  <p><b>Behaviour matters too.</b> Drivers often don't give way, and many people cross wherever they like. Education and enforcement need to go together with better design.</p>
+  <p>What the data can't tell us: it only has the year of each collision, not the day or the hour, the age of the pedestrian or the type of vehicle. With those, the same methods could separate night-time collisions near bars from school-run collisions, like my <a href="https://etymo.co.uk/london-pedestrian-safety/">London project</a> does with the British police data.</p>
 </section>
 
 <section class="prose chapter" id="method">
@@ -279,9 +297,9 @@ footer .prose { padding: 0; }
   <h2>From ArcGIS in 2021 to Python in 2026</h2>
   <div class="compare">
     <div><h4>Thesis, 2021</h4><ul><li>ArcGIS Pro and ArcMap (student licence)</li><li>Planar kernel density</li><li>Space-time cube (emerging hotspots)</li><li>Anselin Local Moran's I</li><li>Network Analyst walking service areas</li><li>Bivariate maps and GWR</li><li>ArcGIS Online dashboard with live traffic</li></ul></div>
-    <div><h4>This version, 2026</h4><ul><li>Python: GeoPandas, NetworkX, PySAL, statsmodels, mgwr</li><li>Network kernel density along the streets</li><li>Emerging hotspots rebuilt (Gi* per year + Mann-Kendall)</li><li>Local Moran's I, 999 permutations</li><li>Walking distances along the network</li><li>Negative binomial with street length as exposure, then GWR</li><li>Open dashboard with an on-duty hospital rota; live traffic optional</li></ul></div>
+    <div><h4>This version, 2026</h4><ul><li>Python: GeoPandas, NetworkX, PySAL, statsmodels, mgwr</li><li>Network kernel density along the streets</li><li>Emerging hotspots rebuilt (Gi* per year + Mann-Kendall)</li><li>Local Moran's I, 999 permutations</li><li>Walking distances along the network</li><li>Bivariate maps and bivariate Local Moran's I</li><li>Negative binomial with street length as exposure, then GWR</li><li>Open dashboard with an on-duty hospital rota; live traffic optional</li></ul></div>
   </div>
-  <p style="margin-top:20px">Everything is reproducible from the thesis data with five scripts, and the code is on <a href="https://github.com/eritrouib/athens-pedestrian-safety">GitHub</a>. Distances are best-case: the thesis street network has no one-way information, so routes may use streets in either direction. Hospitals, police and fire stations come from OpenStreetMap; public hospitals that OpenStreetMap stores only as building outlines are placed at the bus stop named after them, by their entrance.</p>
+  <p style="margin-top:20px">You can rebuild everything from the thesis data with a few scripts, and the code is on <a href="https://github.com/eritrouib/athens-pedestrian-safety">GitHub</a>. The distances are the best case: the thesis street network has no one-way information, so routes can use streets in both directions. Hospitals, police and fire stations come from OpenStreetMap. Public hospitals that are only building outlines in OpenStreetMap are placed at the bus stop named after them, next to their entrance.</p>
 </section>
 </main>
 
@@ -504,6 +522,36 @@ footer .prose { padding: 0; }
   legendRamp("gwrlegend", DENS, ["×1.0", "×1.2", "×1.4", "×1.6", "×1.8+"]);
   var steps3 = { "gwr-traffic": { layers: [gwrLayer("Traffic")], view: BOUNDS }, "gwr-transport": { layers: [gwrLayer("Transport")], view: BOUNDS } };
 
+
+  // map 5: bivariate maps (thesis figures 4.51-4.56)
+  var BV = [["#E8E8E8", "#ACE4E4", "#5AC8C8"], ["#DFB0D6", "#A5ADD3", "#5698B9"], ["#BE64AC", "#8C62AA", "#3B4994"]];
+  var LVL = ["none", "some", "many"];
+  var m5 = baseMap("map5"), cv5 = L.canvas({ padding: 0.3 }), steps5 = {};
+  var GN = { Alcohol: "bars", Transport: "transport stops", Traffic: "traffic points", Education: "schools" };
+  if (CE.bv) {
+    Object.keys(CE.bv.groups).forEach(function (g) {
+      var G = CE.bv.groups[g], lay = L.layerGroup(), lis = L.layerGroup();
+      CE.c.forEach(function (c, i) {
+        var y = CE.bv.y[i], x = G.x[i];
+        lay.addLayer(L.polygon(c, { renderer: cv5, color: "#FFFDF8", weight: 0.6, fillColor: BV[y][x], fillOpacity: 0.92 })
+          .bindTooltip(CE.n[i] + " collisions (" + LVL[y] + ") · " + CE.pois[g][i] + " " + GN[g] + " (" + LVL[x] + ")", { className: "tt", sticky: true }));
+        var q = G.lisa[i], col = LIC[q];
+        lis.addLayer(L.polygon(c, { renderer: cv5, color: col ? "#FFFDF8" : "#CFC8BB", weight: col ? 0.8 : 0.4, fillColor: col || "#F4F1EA", fillOpacity: col ? 0.85 : 0.25 })
+          .bindTooltip((col ? "<b>" + q + "</b><br>" : "Not significant<br>") + CE.pois[g][i] + " " + GN[g] + " · " + CE.n[i] + " collisions", { className: "tt", sticky: true }));
+      });
+      steps5["bv-" + g] = { layers: [lay], view: BOUNDS };
+      steps5["bvl-" + g] = { layers: [lis], view: BOUNDS };
+    });
+    $("bv-traffic-mm").textContent = CE.bv.groups.Traffic.many_many;
+    $("bv-edu-mm").textContent = CE.bv.groups.Education.many_many;
+    $("bvl-alc-hh").textContent = CE.bv.groups.Alcohol.hh;
+    document.querySelectorAll(".bvleg").forEach(function (el) {
+      var cells = "";
+      for (var y = 2; y >= 0; y--) for (var x = 0; x < 3; x++) cells += "<i style='background:" + BV[y][x] + "'></i>";
+      el.innerHTML = "<span style='writing-mode:vertical-rl;transform:rotate(180deg);text-align:center'>more collisions →</span><div class='bvgrid'>" + cells + "</div><span></span><span>more " + el.getAttribute("data-x") + " →</span>";
+    });
+  }
+
   // map 4: reaching help
   var m4 = baseMap("map4"), cv4 = L.canvas({ padding: 0.3 }), BANDS = [2, 4, 6, 8];
   var mpm = M.speed_kmh * 1000 / 60;
@@ -561,8 +609,8 @@ footer .prose { padding: 0; }
     go(els[0].getAttribute("data-step"));
     els[0].classList.add("on");
   }
-  scrolly("sc1", m1, steps1); scrolly("sc2", m2, steps2); scrolly("sc3", m3, steps3); scrolly("sc4", m4, steps4);
-  [m1, m2, m3, m4].forEach(function (m) { setTimeout(function () { m.invalidateSize(); }, 300); });
+  scrolly("sc1", m1, steps1); scrolly("sc2", m2, steps2); scrolly("sc3", m3, steps3); scrolly("sc4", m4, steps4); if (CE.bv) scrolly("sc5", m5, steps5);
+  [m1, m2, m3, m4, m5].forEach(function (m) { setTimeout(function () { m.invalidateSize(); }, 300); });
 
   yearChart(); forest();
   var rt; window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(function () { yearChart(); forest(); }, 150); });

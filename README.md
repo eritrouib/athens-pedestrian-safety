@@ -15,7 +15,7 @@ My MSc thesis in Geoinformatics (National Technical University of Athens, 2021),
 - **Click anywhere** for the nearest on-duty hospitals, police and fire stations with times and distances, and the collision history within 150 m.
 - Street hotspots, space-time hotspot areas, and optional live traffic (see below).
 
-**The story** (`docs/story.html`) walks through the analysis with scrolling maps and charts.
+**The story** (`docs/story.html`) walks through the analysis with scrolling maps and charts, including the bivariate maps from the thesis.
 
 ## Main findings
 
@@ -35,6 +35,7 @@ My MSc thesis in Geoinformatics (National Technical University of Athens, 2021),
 | 4 | `04_model.py` | Negative binomial regression on hexagons, with km of street as exposure; Moran's I on residuals; Geographically Weighted Poisson Regression (adaptive bisquare, AICc) |
 | 5 | `05_build_site.py` | Writes the data files and copies the dashboard and story into `docs/` |
 | 6 | `06_figures.py` | Optional: the paper figures, 300 dpi PNG, in `figures/` |
+| 7 | `07_bivariate.py` | Bivariate maps as in the thesis: collisions against bars, transport stops, traffic points and schools (none / some / many on each axis), and bivariate Local Moran's I (999 permutations). Run it before `05_build_site.py` |
 
 ```
 python -m pip install -r requirements.txt
@@ -42,6 +43,7 @@ python scripts/01_prepare.py
 python scripts/02_hotspots.py
 python scripts/03_access.py
 python scripts/04_model.py
+python scripts/07_bivariate.py
 python scripts/05_build_site.py
 ```
 

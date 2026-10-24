@@ -211,7 +211,10 @@ def main():
                 if f"gwr_{g}" in cells},
         "sig": {g: cells[f"gwr_{g}_sig"].astype(int).tolist() for g in ["Alcohol", "Education", "Traffic", "Transport"]
                 if f"gwr_{g}_sig" in cells},
-        "expected": [round(float(v), 2) for v in cells["expected"]], "n": cells["n"].astype(int).tolist()})
+        "expected": [round(float(v), 2) for v in cells["expected"]], "n": cells["n"].astype(int).tolist(),
+        "pois": {g: cells[g].astype(int).tolist() for g in ["Alcohol", "Education", "Traffic", "Transport"]},
+        # bivariate classes and bivariate Local Moran's I from 07_bivariate.py (optional)
+        "bv": json.load(open(P / "bivariate.json")) if (P / "bivariate.json").exists() else None})
 
     def tops(t):
         t = t.to_crs(4326)
